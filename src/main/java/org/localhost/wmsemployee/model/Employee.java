@@ -3,9 +3,8 @@ package org.localhost.wmsemployee.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.localhost.wmsemployee.model.eumeration.EmployeeContactDetails;
+import lombok.*;
+import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
 
@@ -14,7 +13,10 @@ import java.time.ZonedDateTime;
 @Entity
 @Table(name = "employees")
 @Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,6 +49,25 @@ public class Employee {
 
     @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
     private EmployeeContactDetails employeeContactDetails;
+
+    public static Employee fromRegistrationDto(EmployeeRegistrationDto registrationDto) {
+        EmployeeCredentials credentials = new EmployeeCredentials();
+        EmployeeContactDetails employeeContactDetails = new EmployeeContactDetails();
+
+        credentials.setPasswordHash(registrationDto.getConfirmPassword());
+
+        return Employee.builder()
+                .name(registrationDto.getName())
+                .surname(registrationDto.getSurname())
+                .employeeRole(registrationDto.getEmployeeRole())
+                .employeeStatus(EmployeeStatus.REGISTERED)
+                .supervisorId(registrationDto.getSupervisorId())
+                .registrationDate(ZonedDateTime.now())
+                .supervisorId(registrationDto.getSupervisorId())
+                .credentials(credentials)
+                .employeeContactDetails(employeeContactDetails)
+                .build();
+    }
 
 
 }
