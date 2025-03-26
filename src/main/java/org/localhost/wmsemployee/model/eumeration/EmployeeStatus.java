@@ -10,7 +10,8 @@ public enum EmployeeStatus {
     MEDICAL_LEAVE(3),
     OFF_WORK(4),
     SUSPENDED(5),
-    TERMINATED(6);
+    TERMINATED(6),
+    REGISTERED(7);
 
 
     private int employeeStatusId;

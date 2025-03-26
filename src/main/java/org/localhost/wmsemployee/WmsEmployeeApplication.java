@@ -1,7 +1,5 @@
 package org.localhost.wmsemployee;
 
-import org.localhost.wmsemployee.model.Employee;
-import org.localhost.wmsemployee.service.EmployeeService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
