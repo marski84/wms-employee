@@ -1,9 +1,6 @@
 package org.localhost.wmsemployee.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
@@ -14,6 +11,7 @@ import java.time.ZonedDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 public class EmployeeDataDto {
     // Dane podstawowe pracownika
     private Long id;

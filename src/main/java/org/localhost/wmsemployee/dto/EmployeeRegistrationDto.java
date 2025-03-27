@@ -15,6 +15,7 @@ import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 @Setter
 public class EmployeeRegistrationDto {
 
+    @NotNull(message = "Supervisor ID is required")
     private Long supervisorId;
 
     @NotBlank(message = "First name is required")

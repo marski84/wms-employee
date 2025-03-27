@@ -1,0 +1,15 @@
+@hostname = localhost
+@port = 8080
+@baseUrl = http://{{hostname}}:{{port}}/api/login
+@supervisorId = 2
+@employeeId = 1
+### check if credentials valid
+POST {{baseUrl}}/validate
+Content-Type: application/json
+
+{
+  "userId": {{employeeId}},
+  "firstName": "Jan",
+  "lastName": "Kowalski",
+  "password": "Password@123"
+}

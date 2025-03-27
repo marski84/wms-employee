@@ -12,7 +12,11 @@ import org.springframework.validation.annotation.Validated;
 public interface EmployeeCommandService {
         Employee registerNewEmployee(@Valid EmployeeRegistrationDto employee);
         Employee updateEmployee(@Valid UpdateEmployeeDto employee);
-        Employee updateEmployeeDataBySupervisor(@Valid UpdateEmployeeDto employee, EmployeeRole role, Long supervisorId);
-        Employee updateEmployeeStatusBySupervisor(EmployeeStatus employeeStatus, Long supervisorId);
-        Employee updateEmployeeRoleBySupervisor(EmployeeRole employeeRole, Long supervisorId);
+
+        Employee updateEmployeeDataBySupervisor(@Valid UpdateEmployeeDto employee, Long supervisorId);
+
+        Employee updateEmployeeStatusBySupervisor(Long employeeId, EmployeeStatus employeeStatus, Long supervisorId);
+
+        Employee updateEmployeeRoleBySupervisor(Long employeeId, EmployeeRole employeeRole, Long supervisorId);
     }
+
