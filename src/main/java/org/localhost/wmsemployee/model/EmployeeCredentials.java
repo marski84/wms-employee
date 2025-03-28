@@ -1,11 +1,9 @@
 package org.localhost.wmsemployee.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.exceptions.PasswordDoesNotMatchConfirmPasswordException;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.time.ZonedDateTime;
 
@@ -27,15 +25,14 @@ public class EmployeeCredentials {
 
     private String passwordHash;
 
-    @NotNull
     private ZonedDateTime lastPasswordChange;
 
-    @Value("${reset_token}")
     private String resetToken;
 
     private ZonedDateTime resetTokenExpiry;
 
     private Integer failedAttempt;
+
 
     public static EmployeeCredentials fromEmployee(EmployeeRegistrationDto employeeRegistrationDto, Employee employee) {
         if (!employeeRegistrationDto.getPassword().equals(employeeRegistrationDto.getConfirmPassword())) {
@@ -47,6 +44,7 @@ public class EmployeeCredentials {
                 .lastPasswordChange(ZonedDateTime.now())
                 .failedAttempt(0)
                 .resetTokenExpiry(ZonedDateTime.now().plusDays(60))
+                .resetToken("DEFAULT_RESET_TOKEN")
                 .build();
     }
 
