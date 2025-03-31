@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="002" author="db-init">
+        <!-- Reset sequences to ensure IDs start from 1 -->
+        <sql>ALTER SEQUENCE employees_id_seq RESTART WITH 1</sql>
+        <sql>ALTER SEQUENCE employee_credentials_id_seq RESTART WITH 1</sql>
+        <sql>ALTER SEQUENCE employee_contact_details_id_seq RESTART WITH 1</sql>
+
+
+        <!-- Create the admin user first (self-referenced as supervisor) -->
+        <insert tableName="employees">
+            <column name="id" valueNumeric="1"/>
+            <column name="supervisor_id" valueNumeric="1"/> <!-- Self-supervised -->
+            <column name="name">Admin</column>
+            <column name="surname">System</column>
+            <column name="employee_role">ADMIN</column>
+            <column name="employee_status">ACTIVE</column>
+            <column name="registration_date" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Create credentials for admin -->
+        <insert tableName="employee_credentials">
+            <column name="employee_id" valueNumeric="1"/>
+            <column name="password_hash">$2a$10$uQnxkU9LsJAlBKTKGG2qzO1kP7rPTQOHU1r3PMc7QnQFJZI2NVNZ.
+            </column> <!-- hashed "admin123" -->
+            <column name="last_password_change" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="reset_token">ADMIN_DEFAULT_RESET_TOKEN</column>
+            <column name="reset_token_expiry" valueComputed="CURRENT_TIMESTAMP + INTERVAL '60 days'"/>
+            <column name="failed_attempt" valueNumeric="0"/>
+        </insert>
+
+        <!-- Create contact details for admin -->
+        <insert tableName="employee_contact_details">
+            <column name="employee_id" valueNumeric="1"/>
+            <column name="email">admin@company.com</column>
+            <column name="phone_number">+1234567890</column>
+            <column name="address">Company Headquarters</column>
+            <column name="city">Corporate City</column>
+            <column name="postal_code">12345</column>
+            <column name="country">United States</column>
+        </insert>
+
+        <!-- Create a manager user -->
+        <insert tableName="employees">
+            <column name="id" valueNumeric="2"/>
+            <column name="supervisor_id" valueNumeric="1"/> <!-- Supervised by admin -->
+            <column name="name">Manager</column>
+            <column name="surname">User</column>
+            <column name="employee_role">MANAGER</column>
+            <column name="employee_status">ACTIVE</column>
+            <column name="registration_date" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Create credentials for manager -->
+        <insert tableName="employee_credentials">
+            <column name="employee_id" valueNumeric="2"/>
+            <column name="password_hash">$2a$10$TlYSH0y6h9nCIx5AJYvR4eKzZUYCXA.De.5UxMHuGMeHMPXK5nqx6
+            </column> <!-- hashed "manager123" -->
+            <column name="last_password_change" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="reset_token">MANAGER_DEFAULT_RESET_TOKEN</column>
+            <column name="reset_token_expiry" valueComputed="CURRENT_TIMESTAMP + INTERVAL '60 days'"/>
+            <column name="failed_attempt" valueNumeric="0"/>
+        </insert>
+
+        <!-- Create contact details for manager -->
+        <insert tableName="employee_contact_details">
+            <column name="employee_id" valueNumeric="2"/>
+            <column name="email">manager@company.com</column>
+            <column name="phone_number">+1987654321</column>
+            <column name="address">Branch Office 1</column>
+            <column name="city">Branch City</column>
+            <column name="postal_code">54321</column>
+            <column name="country">United States</column>
+        </insert>
+
+        <!-- Create a regular employee user -->
+        <insert tableName="employees">
+            <column name="id" valueNumeric="3"/>
+            <column name="supervisor_id" valueNumeric="2"/> <!-- Supervised by manager -->
+            <column name="name">Employee</column>
+            <column name="surname">Regular</column>
+            <column name="employee_role">EMPLOYEE</column>
+            <column name="employee_status">ACTIVE</column>
+            <column name="registration_date" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Create credentials for regular employee -->
+        <insert tableName="employee_credentials">
+            <column name="employee_id" valueNumeric="3"/>
+            <column name="password_hash">$2a$10$M.h5QXTjE.UqMy9ZGS6Qz.jv8CUk8aZ7IHu398Qd0lIOK3vHCCvkC
+            </column> <!-- hashed "employee123" -->
+            <column name="last_password_change" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="reset_token">EMPLOYEE_DEFAULT_RESET_TOKEN</column>
+            <column name="reset_token_expiry" valueComputed="CURRENT_TIMESTAMP + INTERVAL '60 days'"/>
+            <column name="failed_attempt" valueNumeric="0"/>
+        </insert>
+
+        <!-- Create contact details for regular employee -->
+        <insert tableName="employee_contact_details">
+            <column name="employee_id" valueNumeric="3"/>
+            <column name="email">employee@company.com</column>
+            <column name="phone_number">+1122334455</column>
+            <column name="address">Employee Residence</column>
+            <column name="city">Home City</column>
+            <column name="postal_code">67890</column>
+            <column name="country">United States</column>
+        </insert>
+
+        <!-- Create a suspended employee -->
+        <insert tableName="employees">
+            <column name="id" valueNumeric="4"/>
+            <column name="supervisor_id" valueNumeric="2"/> <!-- Supervised by manager -->
+            <column name="name">Suspended</column>
+            <column name="surname">User</column>
+            <column name="employee_role">EMPLOYEE</column>
+            <column name="employee_status">SUSPENDED</column>
+            <column name="registration_date" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Create credentials for suspended employee -->
+        <insert tableName="employee_credentials">
+            <column name="employee_id" valueNumeric="4"/>
+            <column name="password_hash">$2a$10$yQlF0rFjS8AjpKz4D5QKGeukLD/Y8vaJx0LyFvRW8m2sP9pqcVYPO
+            </column> <!-- hashed "suspended123" -->
+            <column name="last_password_change" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="reset_token">SUSPENDED_DEFAULT_RESET_TOKEN</column>
+            <column name="reset_token_expiry" valueComputed="CURRENT_TIMESTAMP + INTERVAL '60 days'"/>
+            <column name="failed_attempt" valueNumeric="3"/>
+        </insert>
+
+        <!-- Create contact details for suspended employee -->
+        <insert tableName="employee_contact_details">
+            <column name="employee_id" valueNumeric="4"/>
+            <column name="email">suspended@company.com</column>
+            <column name="phone_number">+1555666777</column>
+            <column name="address">Former Office</column>
+            <column name="city">Previous City</column>
+            <column name="postal_code">13579</column>
+            <column name="country">United States</column>
+        </insert>
+
+        <!-- Set the sequence values to continue after our manually inserted IDs -->
+        <sql>SELECT setval('employees_id_seq', 4)</sql>
+        <sql>SELECT setval('employee_credentials_id_seq', 4)</sql>
+        <sql>SELECT setval('employee_contact_details_id_seq', 4)</sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="003" author="db-admin">
+        <!-- Create database user -->
+        <sql splitStatements="true" endDelimiter=";">
+            -- Create user if not exists (using a simpler approach)
+            CREATE
+            USER emp_admin WITH PASSWORD 'emp_admin';
+        </sql>
+
+        <!-- Capture error if the user already exists -->
+        <sql splitStatements="true" endDelimiter=";">
+            -- Grant connect to database
+            GRANT
+            CONNECT
+            ON DATABASE employee TO emp_admin;
+
+            -- Grant schema usage
+            GRANT USAGE ON SCHEMA
+            public TO emp_admin;
+
+            -- Grant permissions to all tables
+            GRANT
+            SELECT,
+            INSERT
+            ,
+            UPDATE,
+            DELETE
+            ON ALL TABLES IN SCHEMA public TO emp_admin;
+
+            -- Grant permissions to all sequences
+            GRANT
+            USAGE,
+            SELECT
+            ON ALL SEQUENCES IN SCHEMA public TO emp_admin;
+
+            -- Grant permissions to future tables
+            ALTER
+            DEFAULT PRIVILEGES IN SCHEMA public GRANT
+            SELECT,
+            INSERT
+            ,
+            UPDATE,
+            DELETE
+            ON TABLES TO emp_admin;
+
+            -- Grant permissions to future sequences
+            ALTER
+            DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE,
+            SELECT
+            ON SEQUENCES TO emp_admin;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
