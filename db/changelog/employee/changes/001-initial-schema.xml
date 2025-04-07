@@ -6,112 +6,90 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="001" author="app-init">
-        <!-- Create employee table based on the provided entity -->
-        <createTable tableName="employees">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="supervisor_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="name" type="VARCHAR(100)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="surname" type="VARCHAR(100)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="employee_role" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="employee_status" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="registration_date" type="TIMESTAMP WITH TIME ZONE"/>
-        </createTable>
+        <!-- Utworzenie tabel -->
+        <sql splitStatements="true" endDelimiter=";">
+            -- Create employee table based on the provided entity
+            CREATE TABLE employees
+            (
+                id                BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                supervisor_id     BIGINT       NOT NULL,
+                name              VARCHAR(100) NOT NULL,
+                surname           VARCHAR(100) NOT NULL,
+                employee_role     VARCHAR(50)  NOT NULL,
+                employee_status   VARCHAR(50)  NOT NULL,
+                registration_date TIMESTAMP WITH TIME ZONE
+            );
+
+            -- Create employee_credentials table
+            CREATE TABLE employee_credentials
+            (
+                id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                employee_id          BIGINT       NOT NULL UNIQUE,
+                password_hash        VARCHAR(255) NOT NULL,
+                last_password_change TIMESTAMP WITH TIME ZONE,
+                reset_token          VARCHAR(255),
+                reset_token_expiry   TIMESTAMP WITH TIME ZONE,
+                failed_attempt       INT DEFAULT 0,
+                CONSTRAINT fk_credentials_employee FOREIGN KEY (employee_id) REFERENCES employees (id)
+            );
+
+            -- Create employee_contact_details table
+            CREATE TABLE employee_contact_details
+            (
+                id           BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                employee_id  BIGINT       NOT NULL UNIQUE,
+                email        VARCHAR(255) NOT NULL,
+                phone_number VARCHAR(20)  NOT NULL,
+                address      VARCHAR(255),
+                city         VARCHAR(100),
+                postal_code  VARCHAR(20),
+                country      VARCHAR(100),
+                edit_date    TIMESTAMP WITH TIME ZONE,
+                CONSTRAINT fk_contact_details_employee FOREIGN KEY (employee_id) REFERENCES employees (id)
+            )
+        </sql>
 
         <!-- Add foreign key constraint for self-reference (supervisor) -->
-        <addForeignKeyConstraint baseTableName="employees"
-                                 baseColumnNames="supervisor_id"
-                                 constraintName="fk_employee_supervisor"
-                                 referencedTableName="employees"
-                                 referencedColumnNames="id"
-                                 deferrable="true"
-                                 initiallyDeferred="true"/>
-
-        <!-- Create employee_credentials table -->
-        <createTable tableName="employee_credentials">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="employee_id" type="BIGINT">
-                <constraints nullable="false" unique="true" foreignKeyName="fk_credentials_employee"
-                             references="employees(id)"/>
-            </column>
-            <column name="password_hash" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="last_password_change" type="TIMESTAMP WITH TIME ZONE">
-                <constraints nullable="true"/>
-            </column>
-            <column name="reset_token" type="VARCHAR(255)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="reset_token_expiry" type="TIMESTAMP WITH TIME ZONE">
-                <constraints nullable="true"/>
-            </column>
-            <column name="failed_attempt" type="INT" defaultValue="0">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
-
-        <!-- Create employee_contact_details table -->
-        <createTable tableName="employee_contact_details">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="employee_id" type="BIGINT">
-                <constraints nullable="false" unique="true" foreignKeyName="fk_contact_details_employee"
-                             references="employees(id)"/>
-            </column>
-            <column name="email" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="phone_number" type="VARCHAR(20)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="address" type="VARCHAR(255)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="city" type="VARCHAR(100)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="postal_code" type="VARCHAR(20)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="country" type="VARCHAR(100)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="edit_date" type="TIMESTAMP WITH TIME ZONE">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
+        <sql splitStatements="true" endDelimiter=";">
+            ALTER TABLE employees
+                ADD CONSTRAINT fk_employee_supervisor
+                    FOREIGN KEY (supervisor_id) REFERENCES employees (id)
+                        DEFERRABLE INITIALLY DEFERRED
+        </sql>
 
         <!-- Create indexes -->
-        <createIndex tableName="employees" indexName="idx_employee_supervisor">
-            <column name="supervisor_id"/>
-        </createIndex>
+        <sql splitStatements="true" endDelimiter=";">
+            -- Create indexes for faster queries
+            CREATE INDEX idx_employee_supervisor ON employees (supervisor_id);
+            CREATE INDEX idx_employee_status ON employees (employee_status);
+            CREATE INDEX idx_employee_role ON employees (employee_role);
+            CREATE INDEX idx_employee_contact_email ON employee_contact_details (email)
+        </sql>
 
-        <createIndex tableName="employees" indexName="idx_employee_status">
-            <column name="employee_status"/>
-        </createIndex>
+        <!-- Zmiana typu kolumn z GENERATED ALWAYS na GENERATED BY DEFAULT -->
+        <sql splitStatements="true" endDelimiter=";">
+            ALTER TABLE public.employees
+                ALTER COLUMN id SET GENERATED BY DEFAULT;
+            ALTER TABLE public.employee_credentials
+                ALTER COLUMN id SET GENERATED BY DEFAULT;
+            ALTER TABLE public.employee_contact_details
+                ALTER COLUMN id SET GENERATED BY DEFAULT
+        </sql>
 
-        <createIndex tableName="employees" indexName="idx_employee_role">
-            <column name="employee_role"/>
-        </createIndex>
+        <!-- Reset sequences to ensure IDs start from 1 -->
+        <sql splitStatements="true" endDelimiter=";">
+            ALTER SEQUENCE employees_id_seq RESTART WITH 1;
+            ALTER SEQUENCE employee_credentials_id_seq RESTART WITH 1;
+            ALTER SEQUENCE employee_contact_details_id_seq RESTART WITH 1
+        </sql>
 
-        <createIndex tableName="employee_contact_details" indexName="idx_employee_contact_email">
-            <column name="email"/>
-        </createIndex>
+
+        <!-- Set the sequence values to continue after our manually inserted IDs -->
+        <sql splitStatements="true" endDelimiter=";">
+            SELECT setval('employees_id_seq', 4);
+            SELECT setval('employee_credentials_id_seq', 4);
+            SELECT setval('employee_contact_details_id_seq', 4)
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

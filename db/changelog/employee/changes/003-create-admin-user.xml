@@ -6,14 +6,24 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="003" author="db-admin">
-        <!-- Create database user -->
-        <sql splitStatements="true" endDelimiter=";">
-            -- Create user if not exists (using a simpler approach)
-            CREATE
-            USER emp_admin WITH PASSWORD 'emp_admin';
-        </sql>
+        <!-- Sprawdź czy użytkownik istnieje przed utworzeniem -->
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM pg_roles
+                WHERE rolname = 'emp_admin'
+            </sqlCheck>
+        </preConditions>
 
-        <!-- Capture error if the user already exists -->
+        <!-- Create database user tylko jeśli nie istnieje -->
+        <sql splitStatements="true" endDelimiter=";">
+            CREATE
+            USER emp_admin WITH PASSWORD 'emp_admin'
+        </sql>
+    </changeSet>
+
+    <changeSet id="003-grants" author="db-admin">
+        <!-- Przyznaj uprawnienia niezależnie od tego, czy użytkownik został utworzony powyżej -->
         <sql splitStatements="true" endDelimiter=";">
             -- Grant connect to database
             GRANT
@@ -41,7 +51,8 @@
 
             -- Grant permissions to future tables
             ALTER
-            DEFAULT PRIVILEGES IN SCHEMA public GRANT
+            DEFAULT PRIVILEGES IN SCHEMA public
+            GRANT
             SELECT,
             INSERT
             ,
@@ -51,7 +62,8 @@
 
             -- Grant permissions to future sequences
             ALTER
-            DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE,
+            DEFAULT PRIVILEGES IN SCHEMA public
+            GRANT USAGE,
             SELECT
             ON SEQUENCES TO emp_admin;
         </sql>
