@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # Single PostgreSQL instance with two databases
+  postgres:
+    image: postgres:17.2
+    container_name: microservices-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_MULTIPLE_DATABASES: employee,surveys
+    ports:
+      - "5433:5432"
+    networks:
+      - microservices-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ for message queuing
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: microservices-rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      # You might want to create these config files
+      # - ./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      # - ./config/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    networks:
+      - microservices-network
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit_user
+      - RABBITMQ_DEFAULT_PASS=rabbit_pass
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # NATS for pub/sub messaging
+  nats:
+    image: nats:2.10-alpine
+    container_name: microservices-nats
+    restart: unless-stopped
+    ports:
+      - "4222:4222"     # Client connections
+      - "6222:6222"     # Clustering
+      - "8222:8222"     # HTTP Management
+    command:
+      - "-js"           # Enable JetStream
+      - "-m"            # Enable monitoring
+      - "8222"          # Monitoring port
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD", "/nats-server", "--help" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # You can add your service containers here
+  # employee-service:
+  #   build: ./employee-service
+  #   container_name: employee-service
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     nats:
+  #       condition: service_healthy
+  #   environment:
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/employee
+  #     - SPRING_DATASOURCE_USERNAME=postgres
+  #     - SPRING_DATASOURCE_PASSWORD=postgres
+  #     - SPRING_RABBITMQ_HOST=rabbitmq
+  #     - SPRING_RABBITMQ_PORT=5672
+  #     - SPRING_RABBITMQ_USERNAME=rabbit_user
+  #     - SPRING_RABBITMQ_PASSWORD=rabbit_pass
+  #     - NATS_URL=nats://nats:4222
+  #   networks:
+  #     - microservices-network
+
+  # survey-service:
+  #   build: ./survey-service
+  #   container_name: survey-service
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     nats:
+  #       condition: service_healthy
+  #   environment:
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/surveys
+  #     - SPRING_DATASOURCE_USERNAME=postgres
+  #     - SPRING_DATASOURCE_PASSWORD=postgres
+  #     - SPRING_RABBITMQ_HOST=rabbitmq
+  #     - SPRING_RABBITMQ_PORT=5672
+  #     - SPRING_RABBITMQ_USERNAME=rabbit_user
+  #     - SPRING_RABBITMQ_PASSWORD=rabbit_pass
+  #     - NATS_URL=nats://nats:4222
+  #   networks:
+  #     - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  rabbitmq_data:

@@ -1,13 +1,13 @@
 package org.localhost.wmsemployee.repository.impl;
 
-import org.localhost.wmsemployee.repository.crud.EmployeeContactDetailsSqlRepository;
+import org.localhost.wmsemployee.repository.crud.EmployeeContactDetailsCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class EmployeeContactDetailsRepository {
-    private final EmployeeContactDetailsSqlRepository employeeContactDetailsSqlRepository;
+    private final EmployeeContactDetailsCrudRepository employeeContactDetailsCrudRepository;
 
-    public EmployeeContactDetailsRepository(EmployeeContactDetailsSqlRepository employeeContactDetailsSqlRepository) {
-        this.employeeContactDetailsSqlRepository = employeeContactDetailsSqlRepository;
+    public EmployeeContactDetailsRepository(EmployeeContactDetailsCrudRepository employeeContactDetailsCrudRepository) {
+        this.employeeContactDetailsCrudRepository = employeeContactDetailsCrudRepository;
     }
 }

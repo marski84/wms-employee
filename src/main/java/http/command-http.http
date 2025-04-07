@@ -1,0 +1,99 @@
+@hostname = localhost
+@port = 8080
+@baseUrl = http://{{hostname}}:{{port}}/api/employee
+@supervisorId = 2
+@employeeId = 1
+
+### Rejestracja nowego pracownika
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "supervisorId": {{supervisorId}},
+  "name": "Jan",
+  "surname": "Kowalski",
+  "email": "jan.kowalski@example.com",
+  "phoneNumber": "+48123456789",
+  "password": "Password@123",
+  "confirmPassword": "Password@123",
+  "employeeRole": "EMPLOYEE",
+  "address": "ul. Przykładowa 123",
+  "city": "Warszawa",
+  "postalCode": "00-001",
+  "country": "Polska"
+}
+
+
+### Aktualizacja danych pracownika
+PUT {{baseUrl}}
+Content-Type: application/json
+
+{
+  "employeeId": 1,
+  "name": "Jan",
+  "surname": "Kowalski",
+  "email": "jan.kowalski@example.com",
+  "phoneNumber": "+48123456789",
+  "status": "ACTIVE",
+  "address": "ul. Słoneczna 45",
+  "city": "Warszawa",
+  "postalCode": "00-001",
+  "country": "Polska"
+}
+
+### employye data update by supervisor
+PUT {{baseUrl}}/supervisor/{{supervisorId}}
+Content-Type: application/json
+
+{
+  "employeeId": 1,
+  "name": "Zupdatowy",
+  "surname": "CRUD",
+  "email": "jan.kowalski@example.com",
+  "phoneNumber": "+48123456789",
+  "status": "ACTIVE",
+  "address": "ul. Słoneczna 45",
+  "city": "Warszawa",
+  "postalCode": "00-001",
+  "country": "Polska"
+}
+
+
+### employye data update by supervisor
+PUT {{baseUrl}}/supervisor/5
+Content-Type: application/json
+
+{
+  "employeeId": 1,
+  "name": "Zupdatowy",
+  "surname": "CRUD",
+  "email": "jan.kowalski@example.com",
+  "phoneNumber": "+48123456789",
+  "status": "ACTIVE",
+  "address": "ul. Słoneczna 45",
+  "city": "Warszawa",
+  "postalCode": "00-001",
+  "country": "Polska"
+}
+
+
+### update employee status
+PATCH {{baseUrl}}/status
+Content-Type: application/json
+
+{
+  "employeeId": {{employeeId}},
+  "managerId": {{supervisorId}},
+  "status": "HOLIDAY"
+}
+
+### update employee role
+PATCH {{baseUrl}}/role
+Content-Type: application/json
+
+{
+  "employeeId": {{employeeId}},
+  "managerId": {{supervisorId}},
+  "role": "MANAGER"
+}
+

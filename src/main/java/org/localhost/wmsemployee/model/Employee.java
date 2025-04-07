@@ -23,7 +23,6 @@ public class Employee {
     private Long id;
 
     @NotNull(message = "{employee.not.null.supervisorId}")
-    @NotBlank(message = "{employee.not.blank.supervisorId}")
     private Long supervisorId;
 
     @NotNull(message = "{employee.not.null.name}")
