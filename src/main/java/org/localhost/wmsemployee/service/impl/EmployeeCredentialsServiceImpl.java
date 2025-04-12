@@ -6,7 +6,7 @@ import org.localhost.wmsemployee.dto.credentials.UserLoginDto;
 import org.localhost.wmsemployee.exceptions.NotValidTokenException;
 import org.localhost.wmsemployee.exceptions.PasswordNotValidException;
 import org.localhost.wmsemployee.model.EmployeeCredentials;
-import org.localhost.wmsemployee.repository.impl.EmployeeCredentialsRepository;
+import org.localhost.wmsemployee.repository.crud.EmployeeCredentialsRepository;
 import org.localhost.wmsemployee.service.EmployeeCredentialsQueryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

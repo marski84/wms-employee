@@ -8,7 +8,7 @@ import org.localhost.wmsemployee.mappers.FromUpdateDtoToEmployeeMapper;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.localhost.wmsemployee.repository.EmployeeCommandRepository;
+import org.localhost.wmsemployee.repository.EmployeeCommand.EmployeeCommandRepository;
 import org.localhost.wmsemployee.repository.crud.EmployeeCrudRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -22,12 +22,14 @@ import java.util.Objects;
 public class EmployeeCommandRepositoryImpl implements EmployeeCommandRepository {
     private final EmployeeCrudRepository employeeCrudRepository;
 
-    @Value("${ADMIN_USER_ID}")
-    private String ADMIN_USER_ID;
+    private String adminUserId;
 
 
-    public EmployeeCommandRepositoryImpl(EmployeeCrudRepository employeeCrudRepository) {
+    public EmployeeCommandRepositoryImpl(
+            EmployeeCrudRepository employeeCrudRepository,
+            @Value("${ADMIN_USER_ID}") String adminUserId) {
         this.employeeCrudRepository = employeeCrudRepository;
+        this.adminUserId = adminUserId;
     }
 
     public Employee getEmployeeById(Long employeeId) {
@@ -55,9 +57,7 @@ public class EmployeeCommandRepositoryImpl implements EmployeeCommandRepository 
     public Employee updateEmployeeDataBySupervisor(UpdateEmployeeDto updateEmployeeDto, Long supervisorId) {
         Employee employee = getEmployeeById(updateEmployeeDto.getEmployeeId());
 
-        System.out.println(employee.getSupervisorId());
-        System.out.println(supervisorId);
-        if (!Objects.equals(employee.getSupervisorId(), supervisorId) && !Objects.equals(employee.getSupervisorId(), ADMIN_USER_ID)) {
+        if (!Objects.equals(employee.getSupervisorId(), supervisorId) && !Objects.equals(employee.getSupervisorId(), adminUserId)) {
             throw new NotAValidSupervisorException();
         }
 
@@ -69,7 +69,7 @@ public class EmployeeCommandRepositoryImpl implements EmployeeCommandRepository 
     public Employee updateEmployeeStatus(Long employeeId, EmployeeStatus newStatus, Long supervisorId) {
         Employee employee = getEmployeeById(employeeId);
 
-        if (!employee.getSupervisorId().equals(supervisorId) && !Objects.equals(employee.getSupervisorId(), ADMIN_USER_ID)) {
+        if (!employee.getSupervisorId().equals(supervisorId) && !Objects.equals(employee.getSupervisorId(), adminUserId)) {
             throw new NotAValidSupervisorException();
         }
         employee.setEmployeeStatus(newStatus);
@@ -80,7 +80,7 @@ public class EmployeeCommandRepositoryImpl implements EmployeeCommandRepository 
     public Employee updateEmployeeRole(Long employeeId, EmployeeRole newRole, Long supervisorId) {
         Employee employee = getEmployeeById(employeeId);
 
-        if (!employee.getSupervisorId().equals(supervisorId) && !Objects.equals(employee.getSupervisorId(), ADMIN_USER_ID)) {
+        if (!employee.getSupervisorId().equals(supervisorId) && !Objects.equals(employee.getSupervisorId(), adminUserId)) {
             throw new NotAValidSupervisorException();
         }
         employee.setEmployeeRole(newRole);

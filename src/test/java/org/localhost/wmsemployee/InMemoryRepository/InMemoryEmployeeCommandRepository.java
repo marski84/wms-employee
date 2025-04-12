@@ -7,7 +7,7 @@ import org.localhost.wmsemployee.mappers.FromUpdateDtoToEmployeeMapper;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.localhost.wmsemployee.repository.EmployeeCommandRepository;
+import org.localhost.wmsemployee.repository.EmployeeCommand.EmployeeCommandRepository;
 
 import java.util.HashMap;
 import java.util.Map;

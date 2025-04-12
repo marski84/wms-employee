@@ -12,7 +12,7 @@ import org.localhost.wmsemployee.exceptions.NotAValidSupervisorException;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.localhost.wmsemployee.repository.EmployeeCommandRepository;
+import org.localhost.wmsemployee.repository.EmployeeCommand.EmployeeCommandRepository;
 import org.localhost.wmsemployee.service.EmployeeCommandService;
 
 import static org.junit.jupiter.api.Assertions.*;

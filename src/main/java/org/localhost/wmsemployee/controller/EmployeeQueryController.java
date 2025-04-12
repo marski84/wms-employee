@@ -1,7 +1,6 @@
 package org.localhost.wmsemployee.controller;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import org.localhost.wmsemployee.dto.EmployeeDataDto;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
@@ -37,13 +36,13 @@ public class EmployeeQueryController {
 
     @GetMapping("/{id}")
     ResponseEntity<EmployeeDataDto> getEmployeeById(
-            @PathVariable @NotNull @Min(value = 1, message = "employee id must be equal or greater than 1") Long id) {
+            @PathVariable @Min(value = 1, message = "employee id must be equal or greater than 1") Long id) {
         return ResponseEntity.ok(employeeQueryService.getEmployeeById(id));
     }
 
     @GetMapping("/supervisor/{supervisorId}")
     ResponseEntity<List<EmployeeDataDto>> getEmployeesBySupervisor(
-            @PathVariable @NotNull
+            @PathVariable
             @Min(value = 1, message = "supervisor id must be equal or greater than 1")
             Long supervisorId) {
         List<EmployeeDataDto> employees = employeeQueryService.getEmployeesBySupervisor(supervisorId);
@@ -54,7 +53,7 @@ public class EmployeeQueryController {
     }
 
     @GetMapping("/role/{role}")
-    ResponseEntity<List<EmployeeDataDto>> getEmployeesByEmployeeRole(@PathVariable @NotNull EmployeeRole role) {
+    ResponseEntity<List<EmployeeDataDto>> getEmployeesByEmployeeRole(@PathVariable EmployeeRole role) {
         List<EmployeeDataDto> employees = employeeQueryService.getEmployeesByEmployeeRole(role);
         if (employees.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -64,7 +63,7 @@ public class EmployeeQueryController {
 
     @GetMapping("/status/{status}")
     ResponseEntity<List<EmployeeDataDto>> getEmployeeByStatus(
-            @PathVariable @NotNull EmployeeStatus status) {
+            @PathVariable EmployeeStatus status) {
         List<EmployeeDataDto> employees = employeeQueryService.getEmployeeByStatus(status);
         if (employees.isEmpty()) {
             return ResponseEntity.noContent().build();

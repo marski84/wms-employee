@@ -1,6 +1,5 @@
-package org.localhost.wmsemployee.repository.impl;
+package org.localhost.wmsemployee.repository.crud;
 
-import org.localhost.wmsemployee.repository.crud.EmployeeContactDetailsCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository

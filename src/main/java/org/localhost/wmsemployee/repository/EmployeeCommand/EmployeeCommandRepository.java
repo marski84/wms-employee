@@ -1,4 +1,4 @@
-package org.localhost.wmsemployee.repository;
+package org.localhost.wmsemployee.repository.EmployeeCommand;
 
 import org.localhost.wmsemployee.dto.UpdateEmployeeDto;
 import org.localhost.wmsemployee.model.Employee;

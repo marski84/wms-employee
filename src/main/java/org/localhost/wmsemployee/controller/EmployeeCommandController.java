@@ -1,7 +1,6 @@
 package org.localhost.wmsemployee.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.localhost.wmsemployee.dto.*;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.service.EmployeeCommandService;
@@ -21,28 +20,28 @@ public class EmployeeCommandController {
     }
 
     @PostMapping
-    public ResponseEntity<EmployeeDataDto> createEmployee(@RequestBody EmployeeRegistrationDto employeeData) {
+    public ResponseEntity<EmployeeDataDto> createEmployee(@Valid @RequestBody EmployeeRegistrationDto employeeData) {
         Employee employee = employeeCommandService.registerNewEmployee(employeeData);
         return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));
     }
 
     @PutMapping
-    public ResponseEntity<EmployeeDataDto> updateEmployee(@RequestBody UpdateEmployeeDto employeeData) {
+    public ResponseEntity<EmployeeDataDto> updateEmployee(@Valid @RequestBody UpdateEmployeeDto employeeData) {
         Employee employee = employeeCommandService.updateEmployee(employeeData);
         return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));
     }
 
     @PutMapping("/supervisor/{supervisorId}")
     public ResponseEntity<EmployeeDataDto> updateEmployeeDataBySupervisor(
-            @RequestBody UpdateEmployeeDto employeeData,
-            @PathVariable @NotNull(message = "supervisor id cannot be empty!") Long supervisorId) {
+            @Valid @RequestBody UpdateEmployeeDto employeeData,
+            @PathVariable Long supervisorId) {
         Employee employee = employeeCommandService.updateEmployeeDataBySupervisor(
                 employeeData, supervisorId);
         return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));
     }
 
     @PatchMapping("/status")
-    public ResponseEntity<EmployeeDataDto> updateEmployeeStatusBySupervisor(@RequestBody @Valid EmployeeStatusUpdateDto employeeData) {
+    public ResponseEntity<EmployeeDataDto> updateEmployeeStatusBySupervisor(@Valid @RequestBody EmployeeStatusUpdateDto employeeData) {
         Employee employee = employeeCommandService.updateEmployeeStatusBySupervisor(
                 employeeData.getEmployeeId(), employeeData.getStatus(), employeeData.getManagerId()
         );
@@ -50,7 +49,7 @@ public class EmployeeCommandController {
     }
 
     @PatchMapping("/role")
-    public ResponseEntity<EmployeeDataDto> updateEmployeeRoleBySupervisor(@RequestBody @Valid EmployeeRoleUpdateDto employeeData) {
+    public ResponseEntity<EmployeeDataDto> updateEmployeeRoleBySupervisor(@Valid @RequestBody EmployeeRoleUpdateDto employeeData) {
         Employee employee = employeeCommandService.updateEmployeeRoleBySupervisor(employeeData.getEmployeeId(), employeeData.getRole(), employeeData.getManagerId()
         );
         return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));

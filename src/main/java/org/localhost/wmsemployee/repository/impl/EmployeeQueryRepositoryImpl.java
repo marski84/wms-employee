@@ -4,7 +4,7 @@ import org.localhost.wmsemployee.exceptions.EmployeeNotFoundException;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.localhost.wmsemployee.repository.EmployeeQueryRepository;
+import org.localhost.wmsemployee.repository.EmployeeQuery.EmployeeQueryRepository;
 import org.localhost.wmsemployee.repository.crud.EmployeeCrudRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

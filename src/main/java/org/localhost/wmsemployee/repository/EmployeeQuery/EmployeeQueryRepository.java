@@ -1,4 +1,4 @@
-package org.localhost.wmsemployee.repository;
+package org.localhost.wmsemployee.repository.EmployeeQuery;
 
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;

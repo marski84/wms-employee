@@ -34,6 +34,7 @@ public class Employee {
     private String surname;
 
     @NotNull(message = "{employee.not.null.role}")
+    @Enumerated(EnumType.STRING)
     private EmployeeRole employeeRole;
 
     @NotNull(message = "{employee.not.null.status}")

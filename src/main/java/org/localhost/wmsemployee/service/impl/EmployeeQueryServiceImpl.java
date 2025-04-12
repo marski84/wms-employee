@@ -4,7 +4,7 @@ import org.localhost.wmsemployee.dto.EmployeeDataDto;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.localhost.wmsemployee.repository.EmployeeQueryRepository;
+import org.localhost.wmsemployee.repository.EmployeeQuery.EmployeeQueryRepository;
 import org.localhost.wmsemployee.service.EmployeeQueryService;
 import org.springframework.stereotype.Service;
 
