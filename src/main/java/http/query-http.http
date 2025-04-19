@@ -1,0 +1,29 @@
+@hostname = localhost
+@port = 8080
+@baseUrl = http://{{hostname}}:{{port}}/api/employee
+@supervisorId = 2
+@employeeId = 1
+@role = EMPLOYEE
+@status = REGISTERED
+
+
+### get all employees list
+GET {{baseUrl}}
+Content-Type: application/json
+
+### get employee by id
+GET {{baseUrl}}/{{employeeId}}
+
+### get employee by id erro
+GET {{baseUrl}}/-1
+
+### get employee by role
+GET {{baseUrl}}/role/{{role}}
+#GET {{baseUrl}}/role/dsfsdfs
+
+### get employee by status
+GET {{baseUrl}}/status/{{status}}
+#GET {{baseUrl}}/status/fsdfsdf
+
+### get employee by supervisor id
+GET {{baseUrl}}/supervisor/{{supervisorId}}

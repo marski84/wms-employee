@@ -1,0 +1,42 @@
+@hostname = localhost
+@port = 8080
+@baseUrl = http://{{hostname}}:{{port}}/api/login
+@supervisorId = 2
+@employeeId = 1
+### check if credentials valid
+POST {{baseUrl}}/validate
+Content-Type: application/json
+
+{
+  "userId": {{employeeId}},
+  "firstName": "Jan",
+  "lastName": "Kowalski",
+  "password": "Password@123"
+}
+
+### update reset token
+POST {{baseUrl}}/set-reset-token
+Content-Type: application/json
+
+{
+  "userId": {{employeeId}},
+  "firstName": "Jan",
+  "lastName": "Kowalski",
+  "password": "Password@123",
+  "token": "DEFAULT_RESET_TOKEN",
+  "newToken": "testToken"
+}
+
+### change password
+POST {{baseUrl}}/change-password
+Content-Type: application/json
+
+{
+  "userId": {{employeeId}},
+  "firstName": "Jan",
+  "lastName": "Kowalski",
+  "password": "Password@123",
+  "newPassword": "newPassword"
+}
+
+

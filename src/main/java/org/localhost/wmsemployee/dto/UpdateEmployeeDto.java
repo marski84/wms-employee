@@ -17,7 +17,6 @@ import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
 public class UpdateEmployeeDto {
 
     @NotNull
-    @NotNull
     private Long employeeId;
 
     @NotBlank(message = "First name is required")

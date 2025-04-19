@@ -6,21 +6,27 @@ import org.localhost.wmsemployee.exceptions.NotAValidSupervisorException;
 import org.localhost.wmsemployee.mappers.FromUpdateDtoToEmployeeMapper;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
-import org.localhost.wmsemployee.repository.EmployeeRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
+import org.localhost.wmsemployee.repository.EmployeeCommand.EmployeeCommandRepository;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.localhost.wmsemployee.constants.Constants.ADMIN_USER_ID;
 
-public class InMemoryEmployeeRepository implements EmployeeRepository {
-    private static final Logger log = LoggerFactory.getLogger(InMemoryEmployeeRepository.class);
-    private Map<Long, Employee> employees = new HashMap<>();
-    private AtomicLong idCounter = new AtomicLong(1);
+public class InMemoryEmployeeCommandRepository implements EmployeeCommandRepository {
+    private final Long ADMIN_USER_ID = 999666999L;
+    protected Map<Long, Employee> employees = new HashMap<>();
+    protected AtomicLong idCounter = new AtomicLong(1);
+
+    @Override
+    public Employee getEmployeeById(Long employeeId) {
+        return employees.values().stream()
+                .filter(employee -> employee.getId().equals(employeeId))
+                .findFirst()
+                .orElseThrow(EmployeeNotFoundException::new);
+    }
 
     @Override
     public Employee save(Employee employee) {
@@ -56,7 +62,7 @@ public class InMemoryEmployeeRepository implements EmployeeRepository {
     }
 
     @Override
-    public Employee updateEmployeeDataBySupervisor(UpdateEmployeeDto updateEmployeeDto, Long supervisorId, EmployeeRole newEmployeeRole) {
+    public Employee updateEmployeeDataBySupervisor(UpdateEmployeeDto updateEmployeeDto, Long supervisorId) {
         Employee employee = employees.get(updateEmployeeDto.getEmployeeId());
 
         if (!Objects.equals(employee.getSupervisorId(), supervisorId) && !Objects.equals(employee.getSupervisorId(), ADMIN_USER_ID)) {
@@ -64,7 +70,26 @@ public class InMemoryEmployeeRepository implements EmployeeRepository {
         }
 
         Employee updatedEmployee = FromUpdateDtoToEmployeeMapper.mapFromUpdateDtoToEmployee(updateEmployeeDto, employee);
-        updatedEmployee.setEmployeeRole(newEmployeeRole);
         return save(updatedEmployee);
+    }
+
+    @Override
+    public Employee updateEmployeeStatus(Long employeeId, EmployeeStatus newStatus, Long supervisorId) {
+        Employee employee = employees.get(employeeId);
+        if (employee == null) {
+            throw new EmployeeNotFoundException();
+        }
+        employee.setEmployeeStatus(newStatus);
+        return save(employee);
+    }
+
+    @Override
+    public Employee updateEmployeeRole(Long employeeId, EmployeeRole newRole, Long supervisorId) {
+        Employee employee = employees.get(employeeId);
+        if (employee == null) {
+            throw new EmployeeNotFoundException();
+        }
+        employee.setEmployeeRole(newRole);
+        return save(employee);
     }
 }
