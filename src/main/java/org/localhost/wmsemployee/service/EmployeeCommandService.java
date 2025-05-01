@@ -18,5 +18,7 @@ public interface EmployeeCommandService {
         Employee updateEmployeeStatusBySupervisor(Long employeeId, EmployeeStatus employeeStatus, Long supervisorId);
 
         Employee updateEmployeeRoleBySupervisor(Long employeeId, EmployeeRole employeeRole, Long supervisorId);
-    }
+
+        Employee updateEmployeeStatusByEmployee(Long employeeId, EmployeeStatus employeeStatus);
+}
 

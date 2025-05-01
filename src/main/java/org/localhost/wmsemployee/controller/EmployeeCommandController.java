@@ -1,7 +1,10 @@
 package org.localhost.wmsemployee.controller;
 
 import jakarta.validation.Valid;
-import org.localhost.wmsemployee.dto.*;
+import org.localhost.wmsemployee.dto.EmployeeDataDto;
+import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
+import org.localhost.wmsemployee.dto.EmployeeStatusUpdateDto;
+import org.localhost.wmsemployee.dto.UpdateEmployeeDto;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.service.EmployeeCommandService;
 import org.springframework.http.ResponseEntity;
@@ -31,29 +34,10 @@ public class EmployeeCommandController {
         return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));
     }
 
-    @PutMapping("/supervisor/{supervisorId}")
-    public ResponseEntity<EmployeeDataDto> updateEmployeeDataBySupervisor(
-            @Valid @RequestBody UpdateEmployeeDto employeeData,
-            @PathVariable Long supervisorId) {
-        Employee employee = employeeCommandService.updateEmployeeDataBySupervisor(
-                employeeData, supervisorId);
+    @PatchMapping("/updateStatus")
+    public ResponseEntity<EmployeeDataDto> updateEmployeeStatus(@RequestBody EmployeeStatusUpdateDto employeeStatusUpdateDto) {
+        Employee employee = employeeCommandService.updateEmployeeStatusByEmployee(employeeStatusUpdateDto.getEmployeeId(), employeeStatusUpdateDto.getStatus());
         return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));
     }
-
-    @PatchMapping("/status")
-    public ResponseEntity<EmployeeDataDto> updateEmployeeStatusBySupervisor(@Valid @RequestBody EmployeeStatusUpdateDto employeeData) {
-        Employee employee = employeeCommandService.updateEmployeeStatusBySupervisor(
-                employeeData.getEmployeeId(), employeeData.getStatus(), employeeData.getManagerId()
-        );
-        return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));
-    }
-
-    @PatchMapping("/role")
-    public ResponseEntity<EmployeeDataDto> updateEmployeeRoleBySupervisor(@Valid @RequestBody EmployeeRoleUpdateDto employeeData) {
-        Employee employee = employeeCommandService.updateEmployeeRoleBySupervisor(employeeData.getEmployeeId(), employeeData.getRole(), employeeData.getManagerId()
-        );
-        return ResponseEntity.ok().body(EmployeeDataDto.fromEmployee(employee));
-    }
-
 
 }

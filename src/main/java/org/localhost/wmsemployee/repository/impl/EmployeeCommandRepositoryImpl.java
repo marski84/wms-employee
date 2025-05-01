@@ -87,5 +87,12 @@ public class EmployeeCommandRepositoryImpl implements EmployeeCommandRepository 
         return save(employee);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public Employee updateEmployeeStatusInternal(Long employeeId, EmployeeStatus newStatus) {
+        Employee employee = getEmployeeById(employeeId);
+        employee.setEmployeeStatus(newStatus);
+        return save(employee);
+    }
+
 
 }

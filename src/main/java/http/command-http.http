@@ -1,6 +1,7 @@
 @hostname = localhost
 @port = 8080
 @baseUrl = http://{{hostname}}:{{port}}/api/employee
+@supervisorBaseUrl = http://{{hostname}}:{{port}}/api/supervisor
 @supervisorId = 2
 @employeeId = 1
 
@@ -42,25 +43,7 @@ Content-Type: application/json
 }
 
 ### employye data update by supervisor
-PUT {{baseUrl}}/supervisor/{{supervisorId}}
-Content-Type: application/json
-
-{
-  "employeeId": 1,
-  "name": "Zupdatowy",
-  "surname": "CRUD",
-  "email": "jan.kowalski@example.com",
-  "phoneNumber": "+48123456789",
-  "status": "ACTIVE",
-  "address": "ul. Słoneczna 45",
-  "city": "Warszawa",
-  "postalCode": "00-001",
-  "country": "Polska"
-}
-
-
-### employye data update by supervisor
-PUT {{baseUrl}}/supervisor/5
+PUT {{baseUrl}}
 Content-Type: application/json
 
 {
@@ -78,22 +61,34 @@ Content-Type: application/json
 
 
 ### update employee status
-PATCH {{baseUrl}}/status
+PATCH {{supervisorBaseUrl}}/status
 Content-Type: application/json
 
 {
-  "employeeId": {{employeeId}},
-  "managerId": {{supervisorId}},
+  "employeeId": 1,
+  "managerId": 1,
   "status": "HOLIDAY"
 }
 
 ### update employee role
-PATCH {{baseUrl}}/role
+PATCH {{supervisorBaseUrl}}/role
 Content-Type: application/json
 
 {
-  "employeeId": {{employeeId}},
-  "managerId": {{supervisorId}},
+  "employeeId": 1,
+  "managerId": 1,
   "role": "MANAGER"
 }
+
+
+### update employee status by employee
+PATCH {{baseUrl}}/updateStatus
+Content-Type: application/json
+
+{
+  "employeeId": 1,
+  "managerId": 1,
+  "status": "SUSPENDED"
+}
+
 

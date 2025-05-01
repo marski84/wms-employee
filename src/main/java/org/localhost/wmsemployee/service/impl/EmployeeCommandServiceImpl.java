@@ -2,6 +2,7 @@ package org.localhost.wmsemployee.service.impl;
 
 import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.dto.UpdateEmployeeDto;
+import org.localhost.wmsemployee.exceptions.NotAllowedStatusTransition;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.EmployeeContactDetails;
 import org.localhost.wmsemployee.model.EmployeeCredentials;
@@ -15,10 +16,15 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class EmployeeCommandServiceImpl implements EmployeeCommandService {
     private static final Logger log = LoggerFactory.getLogger(EmployeeCommandServiceImpl.class);
     private final EmployeeCommandRepository employeeCommandRepositoryImpl;
+
+    private final List<EmployeeStatus> allowedStatuses = List.of(EmployeeStatus.ACTIVE, EmployeeStatus.OFF_WORK, EmployeeStatus.HOLIDAY);
+
 
     public EmployeeCommandServiceImpl(EmployeeCommandRepository employeeCommandRepositoryImpl) {
         this.employeeCommandRepositoryImpl = employeeCommandRepositoryImpl;
@@ -66,5 +72,13 @@ public class EmployeeCommandServiceImpl implements EmployeeCommandService {
     @Modifying
     public Employee updateEmployeeRoleBySupervisor(Long employeeId, EmployeeRole employeeRole, Long supervisorId) {
         return employeeCommandRepositoryImpl.updateEmployeeRole(employeeId, employeeRole, supervisorId);
+    }
+
+    @Override
+    public Employee updateEmployeeStatusByEmployee(Long employeeId, EmployeeStatus employeeStatus) {
+        if (allowedStatuses.stream().noneMatch(allowedStatus -> allowedStatus.equals(employeeStatus))) {
+            throw new NotAllowedStatusTransition();
+        }
+        return employeeCommandRepositoryImpl.updateEmployeeStatusInternal(employeeId, employeeStatus);
     }
 }
