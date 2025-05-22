@@ -6,7 +6,7 @@ import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.dto.EmployeeStatusUpdateDto;
 import org.localhost.wmsemployee.dto.UpdateEmployeeDto;
 import org.localhost.wmsemployee.model.Employee;
-import org.localhost.wmsemployee.service.EmployeeCommandService;
+import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

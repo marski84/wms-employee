@@ -1,4 +1,4 @@
-package org.localhost.wmsemployee.service;
+package org.localhost.wmsemployee.service.employee;
 
 import jakarta.validation.Valid;
 import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;

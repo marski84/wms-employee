@@ -1,4 +1,4 @@
-package org.localhost.wmsemployee.service;
+package org.localhost.wmsemployee.service.employee;
 
 import org.localhost.wmsemployee.dto.EmployeeDataDto;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;

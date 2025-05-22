@@ -1,16 +1,13 @@
 -- Changeset 002: db-init
--- Wstawianie danych - uproszczona wersja z klasycznymi insertami
+-- Wstawianie danych - wersja dostosowana do encji Employee z auth0UserId i bez EmployeeCredentials
 
 -- 1. Wstawienie administratora
 INSERT INTO public.employees
-(id, supervisor_id, name, surname, employee_role, employee_status, registration_date)
-VALUES (1, 1, 'Admin', 'System', 'ADMIN', 'ACTIVE', NOW());
+(id, supervisor_id, username, name, surname, employee_role, employee_status, registration_date, auth0_user_id)
+VALUES (1, 1, 'adminuser', 'Admin', 'System', 'ADMIN', 'ACTIVE', NOW(), 'auth0|admin_system_001');
+-- Dodano auth0_user_id
 
--- 2. Wstawienie danych uwierzytelniających administratora
-INSERT INTO public.employee_credentials
-(employee_id, password_hash, last_password_change, reset_token, reset_token_expiry, failed_attempt)
-VALUES (1, '$2a$10$uQnxkU9LsJAlBKTKGG2qzO1kP7rPTQOHU1r3PMc7QnQFJZI2NVNZ.', NOW(),
-        'ADMIN_DEFAULT_RESET_TOKEN', NOW() + INTERVAL '60 days', 0);
+-- Usunięto wstawienie danych uwierzytelniających administratora --
 
 -- 3. Wstawienie danych kontaktowych administratora
 INSERT INTO public.employee_contact_details
@@ -20,14 +17,11 @@ VALUES (1, 'admin@company.com', '+1234567890', 'Company Headquarters',
 
 -- 4. Wstawienie managera podległego administratorowi
 INSERT INTO public.employees
-(id, supervisor_id, name, surname, employee_role, employee_status, registration_date)
-VALUES (2, 1, 'Manager', 'User', 'MANAGER', 'ACTIVE', NOW());
+(id, supervisor_id, username, name, surname, employee_role, employee_status, registration_date, auth0_user_id)
+VALUES (2, 1, 'BossyBoss', 'Manager', 'User', 'MANAGER', 'ACTIVE', NOW(), 'auth0|manager_user_002');
+-- Dodano auth0_user_id
 
--- 5. Wstawienie danych uwierzytelniających managera
-INSERT INTO public.employee_credentials
-(employee_id, password_hash, last_password_change, reset_token, reset_token_expiry, failed_attempt)
-VALUES (2, '$2a$10$TlYSH0y6h9nCIx5AJYvR4eKzZUYCXA.De.5UxMHuGMeHMPXK5nqx6', NOW(),
-        'MANAGER_DEFAULT_RESET_TOKEN', NOW() + INTERVAL '60 days', 0);
+-- Usunięto wstawienie danych uwierzytelniających managera --
 
 -- 6. Wstawienie danych kontaktowych managera
 INSERT INTO public.employee_contact_details
@@ -37,13 +31,11 @@ VALUES (2, 'manager@company.com', '+1987654321', 'Branch Office 1',
 
 -- 7. Dodatkowy użytkownik 1 (Zwykły pracownik)
 INSERT INTO public.employees
-(id, supervisor_id, name, surname, employee_role, employee_status, registration_date)
-VALUES (3, 2, 'John', 'Smith', 'EMPLOYEE', 'ACTIVE', NOW());
+(id, supervisor_id, username, name, surname, employee_role, employee_status, registration_date, auth0_user_id)
+VALUES (3, 2, 'JJ', 'John', 'Smith', 'EMPLOYEE', 'ACTIVE', NOW(), 'auth0|john_smith_003');
+-- Dodano auth0_user_id
 
-INSERT INTO public.employee_credentials
-(employee_id, password_hash, last_password_change, reset_token, reset_token_expiry, failed_attempt)
-VALUES (3, '$2a$10$CyEYRUQlbWMSWs.6he9o/eLfBFyzC1K6YmO4TW0Bj75seUX7R6TBu', NOW(),
-        'DEV_RESET_TOKEN_1', NOW() + INTERVAL '30 days', 0);
+-- Usunięto wstawienie danych uwierzytelniających użytkownika 1 --
 
 INSERT INTO public.employee_contact_details
 (employee_id, email, phone_number, address, city, postal_code, country, edit_date)
@@ -52,13 +44,11 @@ VALUES (3, 'john.smith@company.com', '+4875923641', '123 Main St',
 
 -- 8. Dodatkowy użytkownik 2 (Zwykły pracownik)
 INSERT INTO public.employees
-(id, supervisor_id, name, surname, employee_role, employee_status, registration_date)
-VALUES (4, 2, 'Emily', 'Johnson', 'EMPLOYEE', 'ACTIVE', NOW());
+(id, supervisor_id, username, name, surname, employee_role, employee_status, registration_date, auth0_user_id)
+VALUES (4, 2, 'EJ', 'Emily', 'Johnson', 'EMPLOYEE', 'ACTIVE', NOW(), 'auth0|emily_johnson_004');
+-- Dodano auth0_user_id
 
-INSERT INTO public.employee_credentials
-(employee_id, password_hash, last_password_change, reset_token, reset_token_expiry, failed_attempt)
-VALUES (4, '$2a$10$dNXL9IeQ5z1gDqcPMASz8.aZ1NWb25VSmaqS.Gu6uLGQSU6e5RA4K', NOW(),
-        'TESTER_RESET_TOKEN_1', NOW() + INTERVAL '30 days', 0);
+-- Usunięto wstawienie danych uwierzytelniających użytkownika 2 --
 
 INSERT INTO public.employee_contact_details
 (employee_id, email, phone_number, address, city, postal_code, country, edit_date)
@@ -67,13 +57,11 @@ VALUES (4, 'emily.johnson@company.com', '+3456789012', '456 Oak Avenue',
 
 -- 9. Dodatkowy użytkownik 3 (Dział HR)
 INSERT INTO public.employees
-(id, supervisor_id, name, surname, employee_role, employee_status, registration_date)
-VALUES (5, 2, 'Michael', 'Brown', 'HR', 'ACTIVE', NOW());
+(id, supervisor_id, username, name, surname, employee_role, employee_status, registration_date, auth0_user_id)
+VALUES (5, 2, 'HR Man', 'Michael', 'Brown', 'HR', 'ACTIVE', NOW(), 'auth0|michael_brown_005');
+-- Dodano auth0_user_id
 
-INSERT INTO public.employee_credentials
-(employee_id, password_hash, last_password_change, reset_token, reset_token_expiry, failed_attempt)
-VALUES (5, '$2a$10$ub2qcX8WaYQNfZOmvUHy1.7lkGEsZNqYaXJvqgvwwgOtlQI58DRyi', NOW(),
-        'ANALYST_RESET_TOKEN_1', NOW() + INTERVAL '45 days', 0);
+-- Usunięto wstawienie danych uwierzytelniających użytkownika 3 --
 
 INSERT INTO public.employee_contact_details
 (employee_id, email, phone_number, address, city, postal_code, country, edit_date)
@@ -82,20 +70,16 @@ VALUES (5, 'michael.brown@company.com', '+5678901234', '789 Pine Street',
 
 -- 10. Dodatkowy użytkownik 4 (Dział HR)
 INSERT INTO public.employees
-(id, supervisor_id, name, surname, employee_role, employee_status, registration_date)
-VALUES (6, 2, 'Sofia', 'Garcia', 'HR', 'ACTIVE', NOW());
+(id, supervisor_id, username, name, surname, employee_role, employee_status, registration_date, auth0_user_id)
+VALUES (6, 2, 'Upper', 'Sofia', 'Garcia', 'HR', 'ACTIVE', NOW(), 'auth0|sofia_garcia_006');
+-- Dodano auth0_user_id
 
-INSERT INTO public.employee_credentials
-(employee_id, password_hash, last_password_change, reset_token, reset_token_expiry, failed_attempt)
-VALUES (6, '$2a$10$PqNyQNhwOXj1MJCWdCiz7uNbQN79F/zsE7WEA2UxDwpazib4jdNK2', NOW(),
-        'DESIGNER_RESET_TOKEN_1', NOW() + INTERVAL '30 days', 0);
+-- Usunięto wstawienie danych uwierzytelniających użytkownika 4 --
 
 INSERT INTO public.employee_contact_details
 (employee_id, email, phone_number, address, city, postal_code, country, edit_date)
 VALUES (6, 'sofia.garcia@company.com', '+6789012345', '101 Maple Drive',
         'Austin', '78701', 'United States', NOW());
 
--- Aktualizacja sekwencji po ręcznych insertach
 SELECT setval('employees_id_seq', 6);
-SELECT setval('employee_credentials_id_seq', 6);
 SELECT setval('employee_contact_details_id_seq', 6);

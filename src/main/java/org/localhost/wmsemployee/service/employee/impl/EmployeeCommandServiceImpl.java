@@ -1,15 +1,14 @@
-package org.localhost.wmsemployee.service.impl;
+package org.localhost.wmsemployee.service.employee.impl;
 
 import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.dto.UpdateEmployeeDto;
 import org.localhost.wmsemployee.exceptions.NotAllowedStatusTransition;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.EmployeeContactDetails;
-import org.localhost.wmsemployee.model.EmployeeCredentials;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
 import org.localhost.wmsemployee.repository.EmployeeCommand.EmployeeCommandRepository;
-import org.localhost.wmsemployee.service.EmployeeCommandService;
+import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.Modifying;
@@ -39,8 +38,10 @@ public class EmployeeCommandServiceImpl implements EmployeeCommandService {
         EmployeeContactDetails employeeContactDetails = EmployeeContactDetails.fromEmployeeContactDetails(employeeRegistrationDto, newEmployee);
         newEmployee.setEmployeeContactDetails(employeeContactDetails);
 
-        EmployeeCredentials employeeCredentials = EmployeeCredentials.fromEmployee(employeeRegistrationDto, newEmployee);
-        newEmployee.setCredentials(employeeCredentials);
+//        TODO get managment api token
+
+
+
 
         return employeeCommandRepositoryImpl.save(newEmployee);
 

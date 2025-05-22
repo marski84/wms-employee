@@ -43,19 +43,14 @@ public class Employee {
 
     private ZonedDateTime registrationDate;
 
-
-    @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
-    private EmployeeCredentials credentials;
+    @Column(unique = true)
+    private String auth0UserId;
 
     @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
     private EmployeeContactDetails employeeContactDetails;
 
     public static Employee fromRegistrationDto(EmployeeRegistrationDto registrationDto) {
-        EmployeeCredentials credentials = new EmployeeCredentials();
         EmployeeContactDetails employeeContactDetails = new EmployeeContactDetails();
-
-        credentials.setPasswordHash(registrationDto.getConfirmPassword());
-
         return Employee.builder()
                 .name(registrationDto.getName())
                 .surname(registrationDto.getSurname())
@@ -64,7 +59,6 @@ public class Employee {
                 .supervisorId(registrationDto.getSupervisorId())
                 .registrationDate(ZonedDateTime.now())
                 .supervisorId(registrationDto.getSupervisorId())
-                .credentials(credentials)
                 .employeeContactDetails(employeeContactDetails)
                 .build();
     }

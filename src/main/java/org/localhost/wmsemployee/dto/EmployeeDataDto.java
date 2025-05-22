@@ -31,10 +31,6 @@ public class EmployeeDataDto {
     private String country;
     private ZonedDateTime contactDetailsEditDate;
 
-    // Podstawowe dane uwierzytelniające (bez wrażliwych informacji)
-    private ZonedDateTime lastPasswordChange;
-    private Integer failedAttempts;
-
     public static EmployeeDataDto fromEmployee(Employee employee) {
         return EmployeeDataDto.builder()
                 .id(employee.getId())
@@ -53,8 +49,6 @@ public class EmployeeDataDto {
                 .country(employee.getEmployeeContactDetails() != null ? employee.getEmployeeContactDetails().getCountry() : null)
                 .contactDetailsEditDate(employee.getEmployeeContactDetails() != null ? employee.getEmployeeContactDetails().getEditDate() : null)
                 // Dane uwierzytelniające
-                .lastPasswordChange(employee.getCredentials() != null ? employee.getCredentials().getLastPasswordChange() : null)
-                .failedAttempts(employee.getCredentials() != null ? employee.getCredentials().getFailedAttempt() : null)
                 .build();
     }
 }

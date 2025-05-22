@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Min;
 import org.localhost.wmsemployee.dto.EmployeeDataDto;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.localhost.wmsemployee.service.EmployeeQueryService;
+import org.localhost.wmsemployee.service.employee.EmployeeQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;

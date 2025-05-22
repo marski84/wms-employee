@@ -10,7 +10,8 @@ import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.localhost.wmsemployee.service.EmployeeQueryService;
+import org.localhost.wmsemployee.service.employee.EmployeeQueryService;
+import org.localhost.wmsemployee.service.employee.impl.EmployeeQueryServiceImpl;
 
 import java.util.List;
 

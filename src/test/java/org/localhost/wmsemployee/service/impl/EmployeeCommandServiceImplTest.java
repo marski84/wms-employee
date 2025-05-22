@@ -14,7 +14,8 @@ import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
 import org.localhost.wmsemployee.repository.EmployeeCommand.EmployeeCommandRepository;
-import org.localhost.wmsemployee.service.EmployeeCommandService;
+import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
+import org.localhost.wmsemployee.service.employee.impl.EmployeeCommandServiceImpl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -42,8 +43,7 @@ class EmployeeCommandServiceImplTest {
                 () -> assertEquals(employeeRegistrationDto.getName(), testResult.getName()),
                 () -> assertEquals(employeeRegistrationDto.getSurname(), testResult.getSurname()),
                 () -> assertEquals(employeeRegistrationDto.getEmployeeRole(), testResult.getEmployeeRole()),
-                () -> assertEquals(testResult.getId(), testResult.getEmployeeContactDetails().getEmployee().getId()),
-                () -> assertEquals(testResult.getId(), testResult.getCredentials().getEmployee().getId())
+                () -> assertEquals(testResult.getId(), testResult.getEmployeeContactDetails().getEmployee().getId())
         );
     }
 
