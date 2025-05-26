@@ -18,8 +18,8 @@ public class EmployeeRegistrationDto {
     @NotNull(message = "Supervisor ID is required")
     private Long supervisorId;
 
-    @NotNull(message = "Username is required")
-    private String username;
+//    @NotNull(message = "Username is required")
+//    private String username;
 
     @NotBlank(message = "First name is required")
     private String name;
@@ -46,6 +46,7 @@ public class EmployeeRegistrationDto {
 
     @NotNull(message = "Employee role is required")
     private EmployeeRole employeeRole;
+
 
     // Adres - pola opcjonalne
     private String address;

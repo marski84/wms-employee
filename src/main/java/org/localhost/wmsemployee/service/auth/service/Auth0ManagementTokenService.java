@@ -28,6 +28,8 @@ public class Auth0ManagementTokenService {
     private final String CLIENT_CREDENTIALS = "client_credentials";
     private final RestTemplate restTemplate;
     private final ReentrantLock refreshLock = new ReentrantLock();
+
+
     @Value("${auth0.m2m.clientId}")
     private String clientId;
     @Value("${auth0.m2m.clientSecret}")

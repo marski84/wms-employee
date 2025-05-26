@@ -1,24 +1,39 @@
 package org.localhost.wmsemployee.service.employee;
 
-import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
-import org.localhost.wmsemployee.dto.UpdateEmployeeDto;
-import org.localhost.wmsemployee.model.Employee;
-import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
-import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
-import org.springframework.validation.annotation.Validated;
+import org.localhost.wmsemployee.service.auth.model.EmployeeAuthDataDto;
+import org.localhost.wmsemployee.service.auth.service.Auth0ManagementTokenService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-@Validated
-public interface EmployeeCommandService {
-        Employee registerNewEmployee(@Valid EmployeeRegistrationDto employee);
-        Employee updateEmployee(@Valid UpdateEmployeeDto employee);
+@Service
+@Slf4j
+public class EmployeeCommandService {
+    private final Auth0ManagementTokenService auth0ManagementTokenService;
+    private final RestTemplate restTemplate;
 
-        Employee updateEmployeeDataBySupervisor(@Valid UpdateEmployeeDto employee, Long supervisorId);
+    @Value("${auth0.m2m.audience}")
+    private String url;
 
-        Employee updateEmployeeStatusBySupervisor(Long employeeId, EmployeeStatus employeeStatus, Long supervisorId);
+    public EmployeeCommandService(Auth0ManagementTokenService auth0ManagementTokenService, RestTemplate restTemplate) {
+        this.auth0ManagementTokenService = auth0ManagementTokenService;
+        this.restTemplate = restTemplate;
+    }
 
-        Employee updateEmployeeRoleBySupervisor(Long employeeId, EmployeeRole employeeRole, Long supervisorId);
+    public EmployeeAuthDataDto registerEmployee(EmployeeRegistrationDto employeeRegistrationDto) {
+        String managmentToken = auth0ManagementTokenService.getAccessToken();
+        EmployeeAuthDataDto employeeAuthDataDto = EmployeeAuthDataDto.fromEmployee(employeeRegistrationDto);
 
-        Employee updateEmployeeStatusByEmployee(Long employeeId, EmployeeStatus employeeStatus);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + managmentToken);
+        HttpEntity<EmployeeAuthDataDto> request = new HttpEntity<>(employeeAuthDataDto, headers);
+
+        return restTemplate.postForObject(url + "/users", request, EmployeeAuthDataDto.class);
+    }
 }
-
