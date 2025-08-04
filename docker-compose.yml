@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_MULTIPLE_DATABASES: employee,surveys
+      POSTGRES_MULTIPLE_DATABASES: employee_login_facade,surveys
     ports:
       - "5433:5432"
     networks:

@@ -11,9 +11,9 @@ Content-Type: application/json
 
 {
   "supervisorId": {{supervisorId}},
-  "name": "Jan",
-  "surname": "Kowalski",
-  "email": "jan.kowalski@example.com",
+  "name": "test",
+  "surname": "testowy",
+  "email": "test.testowy@example.com",
   "phoneNumber": "+48123456789",
   "password": "Password@123",
   "confirmPassword": "Password@123",
