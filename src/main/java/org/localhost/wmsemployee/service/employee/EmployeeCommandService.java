@@ -1,9 +1,9 @@
 package org.localhost.wmsemployee.service.employee;
 
 import lombok.extern.slf4j.Slf4j;
-import org.localhost.wmsemployee.dto.Auth0RegistrationDto;
-import org.localhost.wmsemployee.dto.EmployeeAuthDataDto;
-import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
+import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
+import org.localhost.wmsemployee.dto.registration.EmployeeAuthDataDto;
+import org.localhost.wmsemployee.dto.registration.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.service.auth.service.Auth0ManagementTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

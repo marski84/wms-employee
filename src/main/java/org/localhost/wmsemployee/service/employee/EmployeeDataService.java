@@ -1,12 +1,15 @@
 package org.localhost.wmsemployee.service.employee;
 
 import lombok.extern.slf4j.Slf4j;
-import org.localhost.wmsemployee.dto.Auth0RegistrationDto;
+import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.localhost.wmsemployee.exceptions.NoValidDtoException;
 import org.localhost.wmsemployee.repository.EmployeeDataRepository;
 import org.localhost.wmsemployee.service.auth.model.EmployeeData;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -34,5 +37,17 @@ public class EmployeeDataService {
 
         employeeDataRepository.save(employeeData);
         log.info("Employee data saved successfully for username: {}", employeeData.getUsername());
+    }
+
+    /**
+     * Find employee data from db by email.
+     *
+     * @param email user email
+     * @return Optional containing the employee data if found, empty Optional otherwise
+     */
+    @Transactional(readOnly = true)
+    public Optional<EmployeeData> findByEmail(String email) {
+        List<EmployeeData> employees = employeeDataRepository.findByEmail(email);
+        return employees.isEmpty() ? Optional.empty() : Optional.of(employees.get(0));
     }
 }

@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.localhost.wmsemployee.dto.Auth0RegistrationDto;
+import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.localhost.wmsemployee.exceptions.NoValidDtoException;
 
 import java.time.ZonedDateTime;
