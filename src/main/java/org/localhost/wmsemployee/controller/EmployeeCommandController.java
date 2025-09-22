@@ -1,8 +1,8 @@
 package org.localhost.wmsemployee.controller;
 
 import jakarta.validation.Valid;
+import org.localhost.wmsemployee.dto.Auth0RegistrationDto;
 import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
-import org.localhost.wmsemployee.service.auth.model.EmployeeAuthDataDto;
 import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,8 +20,14 @@ public class EmployeeCommandController {
         this.employeeCommandService = employeeCommandService;
     }
 
+    /**
+     * Registers a new employee in the system and Auth0.
+     *
+     * @param employeeRegistrationDto The employee registration data
+     * @return Auth0RegistrationDto containing the Auth0 response with user details
+     */
     @PostMapping
-    EmployeeAuthDataDto employeeAuthDataDto(@RequestBody @Valid EmployeeRegistrationDto employeeAuthDataDto) {
-        return employeeCommandService.registerEmployee(employeeAuthDataDto);
+    Auth0RegistrationDto registerEmployee(@RequestBody @Valid EmployeeRegistrationDto employeeRegistrationDto) {
+        return employeeCommandService.registerEmployee(employeeRegistrationDto);
     }
 }

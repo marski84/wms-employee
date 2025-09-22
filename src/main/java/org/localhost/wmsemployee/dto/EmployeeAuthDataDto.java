@@ -1,8 +1,8 @@
-package org.localhost.wmsemployee.service.auth.model;
+package org.localhost.wmsemployee.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
-import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
+import org.localhost.wmsemployee.exceptions.NoValidDtoException;
 
 
 @Builder
@@ -12,36 +12,27 @@ import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 @Setter
 public class EmployeeAuthDataDto {
 
-    @JsonProperty("email")
     private String email;
 
-    @JsonProperty("password")
     private String password;
 
-    @JsonProperty("connection")
     private String connection;
 
     @JsonProperty("email_verified")
     private boolean emailVerified;
 
-    @JsonProperty("family_name")
-    private String familyName;
-
-    @JsonProperty("name")
     private String name;
 
-    @JsonProperty("nickname")
     private String nickname;
 
-    @JsonProperty("username")
     private String username;
 
     @JsonProperty("user_metadata")
-    private UserMetadataDto userMetadata;
+    private Auth0RegistrationDto.UserMetadataDto userMetadata;
 
     public static EmployeeAuthDataDto fromEmployee(EmployeeRegistrationDto registrationDto) {
         if (registrationDto == null) {
-            return null;
+            throw new NoValidDtoException();
         }
 
         String derivedNickname = registrationDto.getName();
@@ -49,9 +40,10 @@ public class EmployeeAuthDataDto {
                 registrationDto.getEmail().split("@")[0] :
                 (registrationDto.getName() + registrationDto.getSurname()).toLowerCase().replaceAll("\\s+", "");
 
-        UserMetadataDto metadata = null;
+        Auth0RegistrationDto.UserMetadataDto metadata = null;
         if (registrationDto.getPhoneNumber() != null) {
-            metadata = UserMetadataDto.builder()
+            metadata = Auth0RegistrationDto.UserMetadataDto.builder()
+                    .familyName(registrationDto.getSurname())
                     .phoneNumber(registrationDto.getPhoneNumber())
                     .roleId(String.valueOf(registrationDto.getEmployeeRole().getRoleId()))
                     .roleName(registrationDto.getEmployeeRole().getRoleName())
@@ -67,7 +59,6 @@ public class EmployeeAuthDataDto {
                 .password(registrationDto.getPassword())
                 .connection("Username-Password-Authentication")
                 .emailVerified(true)
-                .familyName(registrationDto.getSurname())
                 .name(registrationDto.getName() + " " + registrationDto.getSurname())
                 .nickname(derivedNickname)
                 .username(derivedUsername)
