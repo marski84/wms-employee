@@ -4,14 +4,16 @@ import lombok.Getter;
 
 @Getter
 public enum EmployeeRole {
-    EMPLOYEE(1),
-    MANAGER(2),
-    ADMIN(3),
-    HR(4);
+    EMPLOYEE(1, "EMPLOYEE"),
+    MANAGER(2, "MANAGER"),
+    ADMIN(3, "ADMIN"),
+    HR(4, "HR");
 
     private final int roleId;
+    private final String roleName;
 
-    EmployeeRole(int roleId) {
+    EmployeeRole(int roleId, String roleName) {
         this.roleId = roleId;
+        this.roleName = roleName;
     }
 }

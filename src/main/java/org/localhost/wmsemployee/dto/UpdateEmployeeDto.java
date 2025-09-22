@@ -1,7 +1,6 @@
 package org.localhost.wmsemployee.dto;
 
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -34,10 +33,8 @@ public class UpdateEmployeeDto {
             message = "Please provide a valid phone number")
     private String phoneNumber;
 
-    @Enumerated(EnumType.STRING)
     private EmployeeStatus status;
 
-    // Adres - pola opcjonalne
     private String address;
     private String city;
     private String postalCode;
