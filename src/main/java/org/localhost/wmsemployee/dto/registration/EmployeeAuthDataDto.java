@@ -1,4 +1,4 @@
-package org.localhost.wmsemployee.dto;
+package org.localhost.wmsemployee.dto.registration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;

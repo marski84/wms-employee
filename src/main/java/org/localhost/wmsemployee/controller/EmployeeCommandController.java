@@ -1,8 +1,8 @@
 package org.localhost.wmsemployee.controller;
 
 import jakarta.validation.Valid;
-import org.localhost.wmsemployee.dto.Auth0RegistrationDto;
-import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
+import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
+import org.localhost.wmsemployee.dto.registration.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
