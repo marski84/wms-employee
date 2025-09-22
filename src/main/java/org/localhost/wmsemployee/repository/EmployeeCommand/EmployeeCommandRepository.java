@@ -19,4 +19,6 @@ public interface EmployeeCommandRepository {
     Employee updateEmployeeStatus(Long employeeId, EmployeeStatus newStatus, Long supervisorId);
 
     Employee updateEmployeeRole(Long employeeId, EmployeeRole newRole, Long supervisorId);
+
+    Employee updateEmployeeStatusInternal(Long employeeId, EmployeeStatus newStatus);
 }

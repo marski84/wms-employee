@@ -9,6 +9,7 @@ import org.localhost.wmsemployee.dto.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.dto.UpdateEmployeeDto;
 import org.localhost.wmsemployee.exceptions.EmployeeNotFoundException;
 import org.localhost.wmsemployee.exceptions.NotAValidSupervisorException;
+import org.localhost.wmsemployee.exceptions.NotAllowedStatusTransition;
 import org.localhost.wmsemployee.model.Employee;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
@@ -147,7 +148,7 @@ class EmployeeCommandServiceImplTest {
                 .postalCode("updated postal code")
                 .status(EmployeeStatus.HOLIDAY)
                 .build();
-        Long NOT_VALID_SUPERVISOR_ID = 20l;//        when
+        Long NOT_VALID_SUPERVISOR_ID = 20L;//        when
         NotAValidSupervisorException result = assertThrows(
                 NotAValidSupervisorException.class,
                 () -> objectUnderTest.updateEmployeeDataBySupervisor(updateEmployeeDto, NOT_VALID_SUPERVISOR_ID)
@@ -186,5 +187,36 @@ class EmployeeCommandServiceImplTest {
                 () -> assertEquals(employee.getId(), testResult.getId()),
                 () -> assertEquals(newRole, testResult.getEmployeeRole())
         );
+    }
+
+    @Test
+    @DisplayName("update employeeStatusInternal should successfully update employee status")
+    void updateEmployeeStatusInternal() {
+//        given
+        EmployeeRegistrationDto employeeRegistrationDto = TestUtils.getEmployeeRegistrationDto();
+        Employee employee = objectUnderTest.registerNewEmployee(employeeRegistrationDto);
+        EmployeeStatus newEmployeeStatus = EmployeeStatus.HOLIDAY;
+//        when
+        Employee testResult = objectUnderTest.updateEmployeeStatusByEmployee(employee.getSupervisorId(), newEmployeeStatus);
+//        then
+        assertAll(
+                () -> assertEquals(employee.getId(), testResult.getId()),
+                () -> assertEquals(employee.getEmployeeStatus(), newEmployeeStatus)
+        );
+    }
+
+    @Test
+    @DisplayName("update employeeStatusInternal should throw when not allowed status")
+    void updateEmployeeStatusInternalShouldThrow() {
+//        given
+        EmployeeRegistrationDto employeeRegistrationDto = TestUtils.getEmployeeRegistrationDto();
+        Employee employee = objectUnderTest.registerNewEmployee(employeeRegistrationDto);
+        EmployeeStatus newEmployeeStatus = EmployeeStatus.MEDICAL_LEAVE;
+        //        when
+        NotAllowedStatusTransition testResult =
+                assertThrows(
+                        NotAllowedStatusTransition.class,
+                        () -> objectUnderTest.updateEmployeeStatusByEmployee(employee.getSupervisorId(), newEmployeeStatus)
+                );
     }
 }

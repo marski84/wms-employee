@@ -92,4 +92,14 @@ public class InMemoryEmployeeCommandRepository implements EmployeeCommandReposit
         employee.setEmployeeRole(newRole);
         return save(employee);
     }
+
+    @Override
+    public Employee updateEmployeeStatusInternal(Long employeeId, EmployeeStatus newStatus) {
+        Employee employee = employees.get(employeeId);
+        if (employee == null) {
+            throw new EmployeeNotFoundException();
+        }
+        employee.setEmployeeStatus(newStatus);
+        return save(employee);
+    }
 }

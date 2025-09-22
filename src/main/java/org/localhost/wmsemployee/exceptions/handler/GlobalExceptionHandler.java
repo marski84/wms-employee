@@ -3,10 +3,7 @@ package org.localhost.wmsemployee.exceptions.handler;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.localhost.wmsemployee.exceptions.EmployeeNotFoundException;
-import org.localhost.wmsemployee.exceptions.NotAValidSupervisorException;
-import org.localhost.wmsemployee.exceptions.NotValidTokenException;
-import org.localhost.wmsemployee.exceptions.PasswordNotValidException;
+import org.localhost.wmsemployee.exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -103,6 +100,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PasswordNotValidException.class)
     public ResponseEntity<ErrorResponse> handleNotValidTokenException(PasswordNotValidException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse
+                (HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NotAllowedStatusTransition.class)
+    public ResponseEntity<ErrorResponse> handleNotAllowedStatusTransition(NotAllowedStatusTransition ex, HttpServletRequest request) {
         ErrorResponse errorResponse = new ErrorResponse
                 (HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
 
