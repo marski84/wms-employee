@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -147,5 +148,29 @@ class EmployeeCommandServiceTest {
         // Verify interactions
         verify(tokenService).getAccessToken();
         verify(restTemplate).postForObject(anyString(), any(HttpEntity.class), eq(Auth0RegistrationDto.class));
+    }
+
+    @Test
+    void registerEmployee_shouldAttemptToDeleteUserFromAuth0_whenDatabaseSaveFails() {
+        // Arrange
+        when(tokenService.getAccessToken()).thenReturn("mock-token");
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Auth0RegistrationDto.class)))
+                .thenReturn(expectedAuth0Response);
+
+        // This is the key part: mock the database save to throw an exception
+        doThrow(new RuntimeException("Database save failed")).when(employeeDataService).save(any(Auth0RegistrationDto.class));
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> employeeCommandService.registerEmployee(validRegistrationDto));
+
+        // Verify that we tried to delete the user from Auth0
+        // This will require a second token
+        verify(tokenService, times(2)).getAccessToken();
+        verify(restTemplate, times(1)).exchange(
+                endsWith("/api/v2/users/" + expectedAuth0Response.getUserId()),
+                eq(HttpMethod.DELETE),
+                any(),
+                eq(Void.class)
+        );
     }
 }

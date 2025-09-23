@@ -3,14 +3,12 @@ package org.localhost.wmsemployee.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.localhost.wmsemployee.controller.LoginController;
 import org.localhost.wmsemployee.dto.login.Auth0UserDto;
 import org.localhost.wmsemployee.dto.login.EmailLoginRequest;
 import org.localhost.wmsemployee.exceptions.AuthenticationFailedException;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
 import org.localhost.wmsemployee.service.login.LoginService;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -23,11 +21,11 @@ import java.time.ZonedDateTime;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(LoginController.class)
-@ExtendWith(MockitoExtension.class)
 public class LoginIntegrationTest {
 
     private final String testEmail = "test@example.com";
@@ -37,6 +35,7 @@ public class LoginIntegrationTest {
     private final String testUserId = "auth0|123456789";
     @MockBean
     private LoginService loginService;
+    @Autowired
     private MockMvc mockMvc;
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -85,7 +84,8 @@ public class LoginIntegrationTest {
         // Act & Assert
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validEmailLoginRequest)))
+                        .content(objectMapper.writeValueAsString(validEmailLoginRequest))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.user_id", is(testUserId)))
@@ -104,7 +104,8 @@ public class LoginIntegrationTest {
         // Act & Assert
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validEmailLoginRequest)))
+                        .content(objectMapper.writeValueAsString(validEmailLoginRequest))
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status", is(401)))
                 .andExpect(jsonPath("$.error", is("Unauthorized")))
@@ -120,7 +121,8 @@ public class LoginIntegrationTest {
         // Act & Assert
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validEmailLoginRequest)))
+                        .content(objectMapper.writeValueAsString(validEmailLoginRequest))
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status", is(401)))
                 .andExpect(jsonPath("$.error", is("Unauthorized")))
