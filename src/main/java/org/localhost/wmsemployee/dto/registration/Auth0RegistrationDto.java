@@ -2,6 +2,8 @@ package org.localhost.wmsemployee.dto.registration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
+import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
 
 /**
  * DTO representing the response from Auth0 after successful user registration.
@@ -39,6 +41,8 @@ public class Auth0RegistrationDto {
 
         private String address;
 
+        private String familyName;
+
         private String city;
 
         private String postalCode;
@@ -47,8 +51,9 @@ public class Auth0RegistrationDto {
 
         private String roleId;
 
-        private String roleName;
+        private EmployeeRole roleName;
 
-        private String familyName;
+        private EmployeeStatus employeeStatus;
+
     }
 }

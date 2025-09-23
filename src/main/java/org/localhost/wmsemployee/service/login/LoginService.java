@@ -2,10 +2,13 @@ package org.localhost.wmsemployee.service.login;
 
 import lombok.extern.slf4j.Slf4j;
 import org.localhost.wmsemployee.dto.login.Auth0UserDto;
+import org.localhost.wmsemployee.dto.login.TokenResponseDto;
 import org.localhost.wmsemployee.exceptions.AuthenticationFailedException;
 import org.localhost.wmsemployee.exceptions.UserNotFoundException;
+import org.localhost.wmsemployee.service.auth.model.EmployeeData;
 import org.localhost.wmsemployee.service.auth.service.Auth0ManagementTokenService;
 import org.localhost.wmsemployee.service.employee.EmployeeDataService;
+import org.localhost.wmsemployee.service.employee.EmployeeQueryService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ public class LoginService {
 
     private final EmployeeDataService employeeDataService;
     private final Auth0ManagementTokenService auth0ManagementTokenService;
+    private final EmployeeQueryService employeeQueryService;
     private final RestTemplate restTemplate;
 
     @Value("${auth0.m2m.audience}")
@@ -43,9 +47,6 @@ public class LoginService {
     @Value("${auth0.m2m.clientSecret}")
     private String clientSecret;
 
-    @Value("${auth0.api.users-endpoint}")
-    private String usersEndpoint;
-
     /**
      * Constructs a new LoginService with required dependencies.
      *
@@ -54,10 +55,11 @@ public class LoginService {
      * @param restTemplate                RestTemplate for making HTTP requests to Auth0
      */
     public LoginService(EmployeeDataService employeeDataService,
-                        Auth0ManagementTokenService auth0ManagementTokenService,
+                        Auth0ManagementTokenService auth0ManagementTokenService, EmployeeQueryService employeeQueryService,
                         RestTemplate restTemplate) {
         this.employeeDataService = employeeDataService;
         this.auth0ManagementTokenService = auth0ManagementTokenService;
+        this.employeeQueryService = employeeQueryService;
         this.restTemplate = restTemplate;
     }
 
@@ -74,18 +76,17 @@ public class LoginService {
         log.debug("Attempting to authenticate user with email: {}", email);
 
         // Validate input parameters
-        validateUser(email);
+        validateUserCredentials(email, password);
 
-        if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
-            log.error("Invalid password provided for user {}", email);
-            throw new IllegalArgumentException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters long");
-        }
+        String userId = findUserId(email);
+
+
 
         try {
             // 1. Authenticate user with Auth0 using their credentials
-            authenticateWithAuth0(email, password);
+            String userAccessToken = authenticateWithAuth0(email, password);
             // 2. Get user details from Auth0 Management API only if authentication was successful
-            return getUserDetails(email);
+            return employeeQueryService.getEmployeeDetailsByUserId(userId, userAccessToken);
         } catch (HttpClientErrorException e) {
             log.error("Authentication failed for user {}: {}", email, e.getMessage());
             throw new AuthenticationFailedException("Invalid credentials");
@@ -98,6 +99,13 @@ public class LoginService {
         }
     }
 
+    private String findUserId(String email) {
+        EmployeeData employeeData = employeeDataService.findByEmail(email).orElseThrow(
+                () -> new UserNotFoundException("User with email " + email + " not found")
+        );
+        return employeeData.getUserId();
+    }
+
     /**
      * Validates the email address format.
      *
@@ -105,7 +113,7 @@ public class LoginService {
      * @throws IllegalArgumentException if the email is null, empty, or not in a valid format
      * @throws UserNotFoundException    if user is not found
      */
-    private void validateUser(String email) {
+    private void validateUserCredentials(String email, String password) {
         if (!StringUtils.hasText(email)) {
             log.error("Email cannot be null or empty");
             throw new IllegalArgumentException("Email cannot be null or empty");
@@ -116,11 +124,10 @@ public class LoginService {
             throw new IllegalArgumentException("Invalid email format");
         }
 
-        if (employeeDataService.findByEmail(email).isEmpty()) {
-            log.error("User with email {} not found", email);
-            throw new UserNotFoundException("User with email " + email + " not found");
+        if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
+            log.error("Invalid password provided for user {}", email);
+            throw new IllegalArgumentException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters long");
         }
-
 
     }
 
@@ -141,6 +148,25 @@ public class LoginService {
         String authUrl = "https://" + clearDomain + "/oauth/token";
         log.debug("Attempting to authenticate user with email in url: {}", authUrl);
 
+        HttpEntity<Map<String, Object>> request = createAuthenticationRequest(email, password);
+
+        try {
+            ResponseEntity<TokenResponseDto> response = restTemplate.postForEntity(
+                    authUrl, request, TokenResponseDto.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return response.getBody().getAccess_token();
+            } else {
+                throw new AuthenticationFailedException("Failed to authenticate with Auth0");
+            }
+        } catch (HttpClientErrorException e) {
+            log.error("Auth0 authentication failed: {}", e.getResponseBodyAsString());
+            throw e;
+        }
+    }
+
+
+    private HttpEntity<Map<String, Object>> createAuthenticationRequest(String email, String password) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -156,63 +182,6 @@ public class LoginService {
         requestBody.put("realm", "Username-Password-Authentication");
         requestBody.put("connection", "Username-Password-Authentication");
 
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-
-        try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                    authUrl, request, Map.class);
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return (String) response.getBody().get("access_token");
-            } else {
-                throw new AuthenticationFailedException("Failed to authenticate with Auth0");
-            }
-        } catch (HttpClientErrorException e) {
-            log.error("Auth0 authentication failed: {}", e.getResponseBodyAsString());
-            throw e;
-        }
-    }
-
-    /**
-     * Retrieves user details from Auth0 using the Management API.
-     *
-     * @param email The email address of the user to retrieve details for
-     * @return Auth0UserDto containing the user's details
-     * @throws AuthenticationFailedException if the user is not found or details cannot be retrieved
-     */
-    private Auth0UserDto getUserDetails(String email) {
-        // Email validation is already done in handleLogin method
-
-        // Get management API token to access user details
-        String managementToken = auth0ManagementTokenService.getAccessToken();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + managementToken);
-
-        // Find user by email
-        String userByEmailUrl = usersEndpoint + "?q=email:" + email + "&search_engine=v3";
-
-        ResponseEntity<Map[]> userSearchResponse = restTemplate.exchange(
-                userByEmailUrl, HttpMethod.GET, new HttpEntity<>(headers), Map[].class);
-
-        if (userSearchResponse.getBody() == null || userSearchResponse.getBody().length == 0) {
-            throw new AuthenticationFailedException("User not found");
-        }
-
-        String userId = (String) userSearchResponse.getBody()[0].get("user_id");
-
-        // Get complete user details
-        String userDetailsUrl = usersEndpoint + "/" + userId;
-
-        ResponseEntity<Auth0UserDto> userResponse = restTemplate.exchange(
-                userDetailsUrl, HttpMethod.GET, new HttpEntity<>(headers), Auth0UserDto.class);
-
-        if (userResponse.getBody() == null) {
-            throw new AuthenticationFailedException("Failed to retrieve user details");
-        }
-
-        log.info("User {} successfully authenticated", email);
-        return userResponse.getBody();
+        return new HttpEntity<>(requestBody, headers);
     }
 }

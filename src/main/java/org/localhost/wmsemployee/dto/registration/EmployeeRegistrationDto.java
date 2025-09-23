@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
+import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
 
 @Data
 @Builder
@@ -43,6 +44,9 @@ public class EmployeeRegistrationDto {
 
     @NotNull(message = "Employee role is required")
     private EmployeeRole employeeRole;
+
+    @NotNull(message = "Employee status is required")
+    private EmployeeStatus employeeStatus;
 
 
     // Adres - pola opcjonalne

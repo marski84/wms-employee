@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.localhost.wmsemployee.dto.registration.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.model.eumeration.EmployeeRole;
+import org.localhost.wmsemployee.model.eumeration.EmployeeStatus;
 import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -53,6 +54,7 @@ class EmployeeCommandControllerTest {
                 .password("Password1!")
                 .confirmPassword("Password1!")
                 .employeeRole(EmployeeRole.EMPLOYEE)
+                .employeeStatus(EmployeeStatus.ACTIVE)
                 .address("123 Main St")
                 .city("Anytown")
                 .postalCode("12345")
@@ -89,7 +91,7 @@ class EmployeeCommandControllerTest {
                 .andExpect(jsonPath("$.username", is("john.doe")))
                 .andExpect(jsonPath("$.created_at", is("2023-01-01T00:00:00.000Z")));
 
-        // Verify
+//         Verify
         verify(employeeCommandService).registerEmployee(any(EmployeeRegistrationDto.class));
     }
 
