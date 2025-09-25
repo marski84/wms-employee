@@ -170,7 +170,7 @@ public class LoginService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // Using password grant type for user authentication
+        // Using standard password grant type for user authentication
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("grant_type", "password");
         requestBody.put("username", email);
@@ -179,7 +179,6 @@ public class LoginService {
         requestBody.put("client_secret", clientSecret);
         requestBody.put("audience", audience);
         requestBody.put("scope", "openid profile email");
-        requestBody.put("realm", "Username-Password-Authentication");
         requestBody.put("connection", "Username-Password-Authentication");
 
         return new HttpEntity<>(requestBody, headers);

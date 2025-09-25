@@ -1,19 +1,18 @@
 package org.localhost.wmsemployee.config.validator;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Component;
 
-
+@Component
 public class AudienceValidator implements OAuth2TokenValidator<Jwt> {
 
-    private final String audience;
-
-    public AudienceValidator(String audience) {
-        this.audience = audience;
-    }
+    @Value("${auth0.m2m.audience}")
+    private String audience;
 
 
     @Override
