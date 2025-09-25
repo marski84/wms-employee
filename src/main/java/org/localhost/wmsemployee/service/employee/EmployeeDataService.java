@@ -8,7 +8,6 @@ import org.localhost.wmsemployee.service.auth.model.EmployeeData;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -47,7 +46,17 @@ public class EmployeeDataService {
      */
     @Transactional(readOnly = true)
     public Optional<EmployeeData> findByEmail(String email) {
-        List<EmployeeData> employees = employeeDataRepository.findByEmail(email);
-        return employees.isEmpty() ? Optional.empty() : Optional.of(employees.get(0));
+        return employeeDataRepository.findByEmail(email);
+    }
+
+    /**
+     * Find employee data from db by username.
+     *
+     * @param username user username
+     * @return Optional containing the employee data if found, empty Optional otherwise
+     */
+    @Transactional(readOnly = true)
+    public Optional<EmployeeData> findByUsername(String username) {
+        return employeeDataRepository.findByUsername(username);
     }
 }
