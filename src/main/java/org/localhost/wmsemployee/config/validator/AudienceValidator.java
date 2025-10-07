@@ -1,35 +1,30 @@
 package org.localhost.wmsemployee.config.validator;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.stereotype.Component;
 
-@Component
+@Slf4j
 public class AudienceValidator implements OAuth2TokenValidator<Jwt> {
 
-    @Value("${auth0.m2m.audience}")
-    private String audience;
+    private final String expectedAudience;
 
+    public AudienceValidator(String expectedAudience) {
+        this.expectedAudience = expectedAudience;
+    }
 
-    @Override
-    public OAuth2TokenValidatorResult validate(Jwt token) {
-        String tokenAudience = token.getAudience().contains(audience)
-                ? audience
-                : null;
+    public OAuth2TokenValidatorResult validate(Jwt jwt) {
+        log.info("Audience: {}", jwt.getAudience());
+        OAuth2Error error = new OAuth2Error("invalid_audience",
+                "The required audience is missing", null);
 
-        if (tokenAudience == null) {
-            OAuth2Error error = new OAuth2Error(
-                    OAuth2ErrorCodes.INVALID_TOKEN,
-                    "The required audience " + audience + " is missing",
-                    null
-            );
-            return OAuth2TokenValidatorResult.failure(error);
+        if (jwt.getAudience().contains(expectedAudience)) {
+            return OAuth2TokenValidatorResult.success();
         }
 
-        return OAuth2TokenValidatorResult.success();
+        return OAuth2TokenValidatorResult.failure(error);
     }
 }
+

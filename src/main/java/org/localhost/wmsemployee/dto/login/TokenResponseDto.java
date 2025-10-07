@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Represents the token response from authentication service.
- * Contains access token, ID token, and expiration information.
+ * Contains access token, ID token, token type, and expiration information.
  */
 @Getter
 @AllArgsConstructor
@@ -15,5 +15,6 @@ public class TokenResponseDto {
 
     private String access_token;
     private String id_token;
+    private String token_type;
     private String expires_in;
 }
