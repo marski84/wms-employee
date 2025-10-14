@@ -37,23 +37,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
-    public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(org.springframework.web.method.annotation.HandlerMethodValidationException ex, HttpServletRequest request) {
-
-        log.debug("Method parameter validation error: {}", ex.getMessage());
-
-        Map<String, String> errors = new HashMap<>();
-
-        ex.getParameterValidationResults().forEach(result -> result.getResolvableErrors().forEach(error -> {
-            String paramName = result.getMethodParameter().getParameterName();
-            String message = error.getDefaultMessage();
-            errors.put(paramName != null ? paramName : "param", message);
-        }));
-
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "Parameter validation failed", request.getRequestURI(), errors);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
+//    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+//    public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(org.springframework.web.method.annotation.HandlerMethodValidationException ex, HttpServletRequest request) {
+//
+//        log.debug("Method parameter validation error: {}", ex.getMessage());
+//
+//        Map<String, String> errors = new HashMap<>();
+//
+//        ex.getParameterValidationResults().forEach(result -> result.getResolvableErrors().forEach(error -> {
+//            String paramName = result.getMethodParameter().getParameterName();
+//            String message = error.getDefaultMessage();
+//            errors.put(paramName != null ? paramName : "param", message);
+//        }));
+//
+//        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "Parameter validation failed", request.getRequestURI(), errors);
+//
+//        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+//    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {

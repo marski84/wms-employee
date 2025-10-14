@@ -4,24 +4,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.localhost.wmsemployee.dto.login.Auth0UserDto;
+import org.localhost.wmsemployee.dto.login.TokenResponseDto;
 import org.localhost.wmsemployee.exceptions.AuthenticationFailedException;
+import org.localhost.wmsemployee.service.auth.model.EmployeeData;
 import org.localhost.wmsemployee.service.auth.service.Auth0ManagementTokenService;
 import org.localhost.wmsemployee.service.employee.EmployeeDataService;
+import org.localhost.wmsemployee.service.employee.EmployeeQueryService;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -30,337 +30,393 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class LoginServiceTest {
 
-    private final String testEmail = "test@example.com";
-    private final String testPassword = "Password123!";
-    private final String testAuthToken = "test-auth-token";
-    private final String testManagementToken = "test-management-token";
-    private final String testUserId = "auth0|123456789";
     @Mock
     private EmployeeDataService employeeDataService;
+
     @Mock
     private Auth0ManagementTokenService auth0ManagementTokenService;
+
+    @Mock
+    private EmployeeQueryService employeeQueryService;
+
     @Mock
     private RestTemplate restTemplate;
+
     @InjectMocks
     private LoginService loginService;
 
+    private final String testEmail = "test@example.com";
+    private final String testPassword = "Password123!";
+    private final String testUserId = "auth0|123456";
+    private final String testAccessToken = "test-access-token";
+    private final String testIdToken = "test-id-token";
+
+    private EmployeeData testEmployee;
+    private Auth0UserDto testUserDto;
+    private TokenResponseDto testTokenResponse;
+
     @BeforeEach
     void setUp() {
-        // Set private fields using ReflectionTestUtils
+        // Set configuration values using ReflectionTestUtils
+        ReflectionTestUtils.setField(loginService, "audience", "https://test.auth0.com/api/v2/");
         ReflectionTestUtils.setField(loginService, "domain", "test.auth0.com");
         ReflectionTestUtils.setField(loginService, "clientId", "test-client-id");
         ReflectionTestUtils.setField(loginService, "clientSecret", "test-client-secret");
-        ReflectionTestUtils.setField(loginService, "usersEndpoint", "https://test.auth0.com/api/v2/users");
+        ReflectionTestUtils.setField(loginService, "auth0Connection", "Username-Password-Authentication");
+
+        // Setup test employee
+        testEmployee = EmployeeData.builder()
+                .id(1L)
+                .username("testuser")
+                .userId(testUserId)
+                .email(testEmail)
+                .build();
+
+        // Setup test user DTO
+        testUserDto = Auth0UserDto.builder()
+                .userId(testUserId)
+                .email(testEmail)
+                .name("Test User")
+                .username("testuser")
+                .build();
+
+        // Setup test token response
+        testTokenResponse = new TokenResponseDto(testAccessToken, testIdToken, "Bearer", "86400");
     }
 
+    // ========== handleLogin() Tests ==========
+
     @Test
-    void handleLogin_shouldReturnUserDetails_whenAuthenticationIsSuccessful() {
-        // Arrange
-        // Mock Auth0 authentication response
-        Map<String, Object> authResponse = new HashMap<>();
-        authResponse.put("access_token", testAuthToken);
-        ResponseEntity<Map> authResponseEntity = new ResponseEntity<>(authResponse, HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(authResponseEntity);
+    void handleLogin_shouldReturnUserDetails_whenCredentialsAreValid() {
+        // Given
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(testTokenResponse);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
+        when(employeeDataService.findByEmail(testEmail)).thenReturn(Optional.of(testEmployee));
+        when(employeeQueryService.getEmployeeDetailsByUserId(testUserId, testAccessToken))
+                .thenReturn(testUserDto);
 
-        // Mock management token
-        when(auth0ManagementTokenService.getAccessToken()).thenReturn(testManagementToken);
-
-        // Mock user search response
-        Map<String, Object> userMap = new HashMap<>();
-        userMap.put("user_id", testUserId);
-        Map[] userArray = new Map[]{userMap};
-        ResponseEntity<Map[]> userSearchResponse = new ResponseEntity<>(userArray, HttpStatus.OK);
-        when(restTemplate.exchange(
-                contains("?q=email:"),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(Map[].class)))
-                .thenReturn(userSearchResponse);
-
-        // Mock user details response
-        Auth0UserDto expectedUserDto = createTestUserDto();
-        ResponseEntity<Auth0UserDto> userDetailsResponse = new ResponseEntity<>(expectedUserDto, HttpStatus.OK);
-        when(restTemplate.exchange(
-                contains("/" + testUserId),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(Auth0UserDto.class)))
-                .thenReturn(userDetailsResponse);
-
-        // Act
+        // When
         Auth0UserDto result = loginService.handleLogin(testEmail, testPassword);
 
-        // Assert
+        // Then
         assertNotNull(result);
-        assertEquals(expectedUserDto, result);
+        assertEquals(testUserId, result.getUserId());
+        assertEquals(testEmail, result.getEmail());
 
-        // Verify interactions
-        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Map.class));
-        verify(auth0ManagementTokenService).getAccessToken();
-        verify(restTemplate).exchange(contains("?q=email:"), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map[].class));
-        verify(restTemplate).exchange(contains("/" + testUserId), eq(HttpMethod.GET), any(HttpEntity.class), eq(Auth0UserDto.class));
+        // Verify the order: Auth0 authentication happens BEFORE database check
+        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class));
+        verify(employeeDataService).findByEmail(testEmail);
+        verify(employeeQueryService).getEmployeeDetailsByUserId(testUserId, testAccessToken);
     }
 
     @Test
-    void handleLogin_shouldThrowAuthenticationFailedException_whenCredentialsAreInvalid() {
-        // Arrange
-        // Mock Auth0 authentication failure
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+    void handleLogin_shouldThrowAuthenticationFailed_whenAuth0RejectsCredentials() {
+        // Given
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenThrow(HttpClientErrorException.Unauthorized.create(
+                        org.springframework.http.HttpStatus.UNAUTHORIZED,
+                        "Unauthorized",
+                        org.springframework.http.HttpHeaders.EMPTY,
+                        new byte[0],
+                        null
+                ));
 
-        // Act & Assert
-        Exception exception = assertThrows(AuthenticationFailedException.class, () -> {
-            loginService.handleLogin(testEmail, testPassword);
-        });
+        // When & Then
+        AuthenticationFailedException exception = assertThrows(
+                AuthenticationFailedException.class,
+                () -> loginService.handleLogin(testEmail, testPassword)
+        );
 
         assertEquals("Invalid credentials", exception.getMessage());
 
-        // Verify interactions
-        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Map.class));
-        verify(auth0ManagementTokenService, never()).getAccessToken();
+        // Verify database was never checked (fail fast at Auth0)
+        verify(employeeDataService, never()).findByEmail(anyString());
+        verify(employeeQueryService, never()).getEmployeeDetailsByUserId(anyString(), anyString());
     }
 
     @Test
-    void handleLogin_shouldThrowAuthenticationFailedException_whenUserNotFound() {
-        // Arrange
-        // Mock Auth0 authentication response
-        Map<String, Object> authResponse = new HashMap<>();
-        authResponse.put("access_token", testAuthToken);
-        ResponseEntity<Map> authResponseEntity = new ResponseEntity<>(authResponse, HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(authResponseEntity);
+    void handleLogin_shouldThrowAuthenticationFailed_whenUserNotFoundInDatabase() {
+        // Given - Auth0 authentication succeeds
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(testTokenResponse);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
 
-        // Mock management token
-        when(auth0ManagementTokenService.getAccessToken()).thenReturn(testManagementToken);
+        // But user doesn't exist in our database
+        when(employeeDataService.findByEmail(testEmail)).thenReturn(Optional.empty());
 
-        // Mock empty user search response
-        Map[] emptyUserArray = new Map[0];
-        ResponseEntity<Map[]> emptyUserSearchResponse = new ResponseEntity<>(emptyUserArray, HttpStatus.OK);
-        when(restTemplate.exchange(
-                contains("?q=email:"),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(Map[].class)))
-                .thenReturn(emptyUserSearchResponse);
+        // When & Then
+        AuthenticationFailedException exception = assertThrows(
+                AuthenticationFailedException.class,
+                () -> loginService.handleLogin(testEmail, testPassword)
+        );
 
-        // Act & Assert
-        Exception exception = assertThrows(AuthenticationFailedException.class, () -> {
-            loginService.handleLogin(testEmail, testPassword);
-        });
+        // Critical security check: same error message as invalid credentials
+        assertEquals("Invalid credentials", exception.getMessage());
 
-        assertEquals("User not found", exception.getMessage());
-
-        // Verify interactions
-        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Map.class));
-        verify(auth0ManagementTokenService).getAccessToken();
-        verify(restTemplate).exchange(contains("?q=email:"), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map[].class));
+        // Verify Auth0 was called first
+        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class));
+        verify(employeeDataService).findByEmail(testEmail);
+        verify(employeeQueryService, never()).getEmployeeDetailsByUserId(anyString(), anyString());
     }
 
     @Test
-    void handleLogin_shouldThrowAuthenticationFailedException_whenUserDetailsCannotBeRetrieved() {
-        // Arrange
-        // Mock Auth0 authentication response
-        Map<String, Object> authResponse = new HashMap<>();
-        authResponse.put("access_token", testAuthToken);
-        ResponseEntity<Map> authResponseEntity = new ResponseEntity<>(authResponse, HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(authResponseEntity);
+    void handleLogin_shouldThrowIllegalArgument_whenEmailIsNull() {
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> loginService.handleLogin(null, testPassword)
+        );
 
-        // Mock management token
-        when(auth0ManagementTokenService.getAccessToken()).thenReturn(testManagementToken);
-
-        // Mock user search response
-        Map<String, Object> userMap = new HashMap<>();
-        userMap.put("user_id", testUserId);
-        Map[] userArray = new Map[]{userMap};
-        ResponseEntity<Map[]> userSearchResponse = new ResponseEntity<>(userArray, HttpStatus.OK);
-        when(restTemplate.exchange(
-                contains("?q=email:"),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(Map[].class)))
-                .thenReturn(userSearchResponse);
-
-        // Mock null user details response
-        ResponseEntity<Auth0UserDto> nullUserDetailsResponse = new ResponseEntity<>(null, HttpStatus.OK);
-        when(restTemplate.exchange(
-                contains("/" + testUserId),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(Auth0UserDto.class)))
-                .thenReturn(nullUserDetailsResponse);
-
-        // Act & Assert
-        Exception exception = assertThrows(AuthenticationFailedException.class, () -> {
-            loginService.handleLogin(testEmail, testPassword);
-        });
-
-        assertEquals("Failed to retrieve user details", exception.getMessage());
-
-        // Verify interactions
-        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Map.class));
-        verify(auth0ManagementTokenService).getAccessToken();
-        verify(restTemplate).exchange(contains("?q=email:"), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map[].class));
-        verify(restTemplate).exchange(contains("/" + testUserId), eq(HttpMethod.GET), any(HttpEntity.class), eq(Auth0UserDto.class));
+        assertEquals("Email cannot be null or empty", exception.getMessage());
+        verifyNoInteractions(restTemplate, employeeDataService, employeeQueryService);
     }
 
     @Test
-    void handleLogin_shouldVerifyCorrectHeadersAreSent_whenGettingUserDetails() {
-        // Arrange
-        // Mock Auth0 authentication response
-        Map<String, Object> authResponse = new HashMap<>();
-        authResponse.put("access_token", testAuthToken);
-        ResponseEntity<Map> authResponseEntity = new ResponseEntity<>(authResponse, HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(authResponseEntity);
+    void handleLogin_shouldThrowIllegalArgument_whenEmailIsEmpty() {
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> loginService.handleLogin("", testPassword)
+        );
 
-        // Mock management token
-        when(auth0ManagementTokenService.getAccessToken()).thenReturn(testManagementToken);
+        assertEquals("Email cannot be null or empty", exception.getMessage());
+        verifyNoInteractions(restTemplate, employeeDataService, employeeQueryService);
+    }
 
-        // Mock user search response
-        Map<String, Object> userMap = new HashMap<>();
-        userMap.put("user_id", testUserId);
-        Map[] userArray = new Map[]{userMap};
-        ResponseEntity<Map[]> userSearchResponse = new ResponseEntity<>(userArray, HttpStatus.OK);
-        when(restTemplate.exchange(
-                contains("?q=email:"),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(Map[].class)))
-                .thenReturn(userSearchResponse);
+    @Test
+    void handleLogin_shouldThrowIllegalArgument_whenEmailFormatIsInvalid() {
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> loginService.handleLogin("invalid-email", testPassword)
+        );
 
-        // Mock user details response
-        Auth0UserDto expectedUserDto = createTestUserDto();
-        ResponseEntity<Auth0UserDto> userDetailsResponse = new ResponseEntity<>(expectedUserDto, HttpStatus.OK);
-        when(restTemplate.exchange(
-                contains("/" + testUserId),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(Auth0UserDto.class)))
-                .thenReturn(userDetailsResponse);
+        assertEquals("Invalid email format", exception.getMessage());
+        verifyNoInteractions(restTemplate, employeeDataService, employeeQueryService);
+    }
 
-        // Act
+    @Test
+    void handleLogin_shouldThrowIllegalArgument_whenPasswordIsNull() {
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> loginService.handleLogin(testEmail, null)
+        );
+
+        assertTrue(exception.getMessage().contains("Password must be at least"));
+        verifyNoInteractions(restTemplate, employeeDataService, employeeQueryService);
+    }
+
+    @Test
+    void handleLogin_shouldThrowIllegalArgument_whenPasswordIsTooShort() {
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> loginService.handleLogin(testEmail, "12345") // Only 5 chars
+        );
+
+        assertTrue(exception.getMessage().contains("Password must be at least 6 characters long"));
+        verifyNoInteractions(restTemplate, employeeDataService, employeeQueryService);
+    }
+
+    @Test
+    void handleLogin_shouldPropagateRuntimeException_whenUnexpectedErrorOccurs() {
+        // Given
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenThrow(new RuntimeException("Unexpected error"));
+
+        // When & Then
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> loginService.handleLogin(testEmail, testPassword)
+        );
+
+        assertEquals("Login process failed", exception.getMessage());
+        assertTrue(exception.getCause().getMessage().contains("Unexpected error"));
+    }
+
+    // ========== handleApiLogin() Tests ==========
+
+    @Test
+    void handleApiLogin_shouldReturnTokenResponse_whenCredentialsAreValid() {
+        // Given
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(testTokenResponse);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
+        when(employeeDataService.findByEmail(testEmail)).thenReturn(Optional.of(testEmployee));
+
+        // When
+        TokenResponseDto result = loginService.handleApiLogin(testEmail, testPassword);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(testAccessToken, result.getAccess_token());
+        assertEquals(testIdToken, result.getId_token());
+        assertEquals("Bearer", result.getToken_type());
+        assertEquals("86400", result.getExpires_in());
+
+        // Verify the order: Auth0 first, then database check
+        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class));
+        verify(employeeDataService).findByEmail(testEmail);
+    }
+
+    @Test
+    void handleApiLogin_shouldThrowAuthenticationFailed_whenAuth0RejectsCredentials() {
+        // Given
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenThrow(HttpClientErrorException.Unauthorized.create(
+                        org.springframework.http.HttpStatus.UNAUTHORIZED,
+                        "Unauthorized",
+                        org.springframework.http.HttpHeaders.EMPTY,
+                        new byte[0],
+                        null
+                ));
+
+        // When & Then
+        AuthenticationFailedException exception = assertThrows(
+                AuthenticationFailedException.class,
+                () -> loginService.handleApiLogin(testEmail, testPassword)
+        );
+
+        assertEquals("Invalid credentials", exception.getMessage());
+        verify(employeeDataService, never()).findByEmail(anyString());
+    }
+
+    @Test
+    void handleApiLogin_shouldThrowAuthenticationFailed_whenUserNotFoundInDatabase() {
+        // Given
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(testTokenResponse);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
+        when(employeeDataService.findByEmail(testEmail)).thenReturn(Optional.empty());
+
+        // When & Then
+        AuthenticationFailedException exception = assertThrows(
+                AuthenticationFailedException.class,
+                () -> loginService.handleApiLogin(testEmail, testPassword)
+        );
+
+        // User enumeration prevention: same error message
+        assertEquals("Invalid credentials", exception.getMessage());
+    }
+
+    @Test
+    void handleApiLogin_shouldValidateCredentials_beforeCallingAuth0() {
+        // When & Then - Invalid email format
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> loginService.handleApiLogin("not-an-email", testPassword)
+        );
+
+        verifyNoInteractions(restTemplate);
+    }
+
+    // ========== Authentication Request Tests ==========
+
+    @Test
+    void handleLogin_shouldSendCorrectAuthenticationRequestToAuth0() {
+        // Given
+        ArgumentCaptor<HttpEntity> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(testTokenResponse);
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
+        when(employeeDataService.findByEmail(testEmail)).thenReturn(Optional.of(testEmployee));
+        when(employeeQueryService.getEmployeeDetailsByUserId(anyString(), anyString()))
+                .thenReturn(testUserDto);
+
+        // When
         loginService.handleLogin(testEmail, testPassword);
 
-        // Assert & Verify
-        // Verify authentication request
-        ArgumentCaptor<HttpEntity> authRequestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).postForEntity(contains("/oauth/token"), authRequestCaptor.capture(), eq(Map.class));
+        // Then - Verify request structure
+        HttpEntity<Map<String, Object>> capturedRequest = requestCaptor.getValue();
+        Map<String, Object> requestBody = capturedRequest.getBody();
 
-        HttpEntity<?> capturedAuthRequest = authRequestCaptor.getValue();
-        Map<String, Object> requestBody = (Map<String, Object>) capturedAuthRequest.getBody();
+        assertNotNull(requestBody);
         assertEquals("password", requestBody.get("grant_type"));
         assertEquals(testEmail, requestBody.get("username"));
         assertEquals(testPassword, requestBody.get("password"));
-
-        // Verify user details request
-        ArgumentCaptor<HttpEntity> userRequestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).exchange(contains("?q=email:"), eq(HttpMethod.GET), userRequestCaptor.capture(), eq(Map[].class));
-
-        HttpEntity<?> capturedUserRequest = userRequestCaptor.getValue();
-        assertEquals("Bearer " + testManagementToken, capturedUserRequest.getHeaders().getFirst("Authorization"));
+        assertEquals("test-client-id", requestBody.get("client_id"));
+        assertEquals("test-client-secret", requestBody.get("client_secret"));
+        assertEquals("https://test.auth0.com/api/v2/", requestBody.get("audience"));
+        assertEquals("openid profile email", requestBody.get("scope"));
+        assertEquals("Username-Password-Authentication", requestBody.get("connection"));
     }
 
     @Test
-    void handleLogin_shouldPropagateException_whenUnexpectedErrorOccurs() {
-        // Arrange
-        // Mock Auth0 authentication response
-        Map<String, Object> authResponse = new HashMap<>();
-        authResponse.put("access_token", testAuthToken);
-        ResponseEntity<Map> authResponseEntity = new ResponseEntity<>(authResponse, HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
-                .thenReturn(authResponseEntity);
+    void handleApiLogin_shouldThrowAuthenticationFailed_whenTokenResponseIsNull() {
+        // Given - Response body is null
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(null);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
 
-        // Mock unexpected error during management token retrieval
-        when(auth0ManagementTokenService.getAccessToken())
-                .thenThrow(new RuntimeException("Unexpected error"));
+        // When & Then
+        AuthenticationFailedException exception = assertThrows(
+                AuthenticationFailedException.class,
+                () -> loginService.handleApiLogin(testEmail, testPassword)
+        );
 
-        // Act & Assert
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            loginService.handleLogin(testEmail, testPassword);
-        });
-
-        assertEquals("Login process failed", exception.getMessage());
-        assertNotNull(exception.getCause());
-        assertEquals("Unexpected error", exception.getCause().getMessage());
-
-        // Verify interactions
-        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Map.class));
-        verify(auth0ManagementTokenService).getAccessToken();
+        assertEquals("Failed to authenticate with Auth0", exception.getMessage());
     }
 
     @Test
-    void handleLogin_shouldThrowIllegalArgumentException_whenEmailIsNull() {
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            loginService.handleLogin(null, testPassword);
-        });
+    void handleApiLogin_shouldThrowAuthenticationFailed_whenAccessTokenIsNull() {
+        // Given - Token response has null access_token
+        TokenResponseDto invalidTokenResponse = new TokenResponseDto(null, testIdToken, "Bearer", "86400");
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(invalidTokenResponse);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
 
-        assertEquals("Email cannot be null or empty", exception.getMessage());
+        // When & Then
+        AuthenticationFailedException exception = assertThrows(
+                AuthenticationFailedException.class,
+                () -> loginService.handleApiLogin(testEmail, testPassword)
+        );
+
+        assertEquals("Failed to authenticate with Auth0", exception.getMessage());
+    }
+
+    // ========== Edge Cases ==========
+
+    @Test
+    void handleLogin_shouldHandleAuth0DomainWithWhitespace() {
+        // Given - Domain has extra whitespace
+        ReflectionTestUtils.setField(loginService, "domain", "  test.auth0.com  ");
+
+        ResponseEntity<TokenResponseDto> responseEntity = ResponseEntity.ok(testTokenResponse);
+        when(restTemplate.postForEntity(contains("https://test.auth0.com/oauth/token"),
+                any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenReturn(responseEntity);
+        when(employeeDataService.findByEmail(testEmail)).thenReturn(Optional.of(testEmployee));
+        when(employeeQueryService.getEmployeeDetailsByUserId(anyString(), anyString()))
+                .thenReturn(testUserDto);
+
+        // When
+        Auth0UserDto result = loginService.handleLogin(testEmail, testPassword);
+
+        // Then
+        assertNotNull(result);
+        // Verify the domain whitespace was cleaned
+        verify(restTemplate).postForEntity(
+                eq("https://test.auth0.com/oauth/token"),
+                any(HttpEntity.class),
+                eq(TokenResponseDto.class)
+        );
     }
 
     @Test
-    void handleLogin_shouldThrowIllegalArgumentException_whenEmailIsEmpty() {
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            loginService.handleLogin("", testPassword);
-        });
+    void handleApiLogin_shouldPropagateRuntimeException_whenUnexpectedErrorOccurs() {
+        // Given
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(TokenResponseDto.class)))
+                .thenThrow(new RuntimeException("Network error"));
 
-        assertEquals("Email cannot be null or empty", exception.getMessage());
-    }
+        // When & Then
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> loginService.handleApiLogin(testEmail, testPassword)
+        );
 
-    @Test
-    void handleLogin_shouldThrowIllegalArgumentException_whenEmailFormatIsInvalid() {
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            loginService.handleLogin("invalid-email", testPassword);
-        });
-
-        assertEquals("Invalid email format", exception.getMessage());
-    }
-
-    @Test
-    void handleLogin_shouldThrowIllegalArgumentException_whenPasswordIsNull() {
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            loginService.handleLogin(testEmail, null);
-        });
-
-        assertEquals("Password must be at least 6 characters long", exception.getMessage());
-    }
-
-    @Test
-    void handleLogin_shouldThrowIllegalArgumentException_whenPasswordIsTooShort() {
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            loginService.handleLogin(testEmail, "12345");
-        });
-
-        assertEquals("Password must be at least 6 characters long", exception.getMessage());
-    }
-
-    private Auth0UserDto createTestUserDto() {
-        Auth0UserDto.UserMetadata userMetadata = Auth0UserDto.UserMetadata.builder()
-                .phoneNumber("+1234567890")
-                .address("123 Main St")
-                .city("Anytown")
-                .postalCode("12345")
-                .country("USA")
-                .roleId("1")
-                .roleName(org.localhost.wmsemployee.model.eumeration.EmployeeRole.EMPLOYEE)
-                .familyName("Doe")
-                .build();
-
-        return Auth0UserDto.builder()
-                .userId(testUserId)
-                .email(testEmail)
-                .name("John Doe")
-                .nickname("John")
-                .username("john.doe")
-                .createdAt(ZonedDateTime.now())
-                .updatedAt(ZonedDateTime.now())
-                .userMetadata(userMetadata)
-                .build();
+        assertEquals("API login process failed", exception.getMessage());
+        assertTrue(exception.getCause().getMessage().contains("Network error"));
     }
 }
