@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/token").permitAll() // API login endpoints
+                        .requestMatchers("/api/auth/token").permitAll() // API login endpoints
                         .requestMatchers("/api/employee/**").authenticated() // Employee endpoints require JWT
                         .requestMatchers("/api/private/**").authenticated()
                         .requestMatchers("/api/admin/**").hasAuthority("SCOPE_admin")
