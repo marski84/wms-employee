@@ -14,13 +14,10 @@ import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -35,9 +32,6 @@ public class SecurityConfig {
 
     @Value("${auth0.m2m.audience}")
     private String audience;
-
-    @Value("${auth0.m2m.clientId}")
-    private String clientId;
 
     @Bean
     public CorsConfigurationSource corsConfiguration() {
@@ -60,14 +54,14 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/**") // Disable CSRF for API endpoints
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/images/**", "/login", "/error").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/token").permitAll() // API login endpoints
+                        .requestMatchers("/api/employee/**").authenticated() // Employee endpoints require JWT
                         .requestMatchers("/api/private/**").authenticated()
                         .requestMatchers("/api/admin/**").hasAuthority("SCOPE_admin")
-                        .anyRequest().authenticated()
+                        .anyRequest().denyAll() // Deny all other requests (no web pages)
                 )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwt -> jwt
@@ -75,26 +69,8 @@ public class SecurityConfig {
                                 .jwtAuthenticationConverter(customJwtAuthenticationConverter()
                                 )
                         )
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error=true")
-                )
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/")
-                        .addLogoutHandler(logoutHandler()));
+                );
         return http.build();
-    }
-
-    private LogoutHandler logoutHandler() {
-        return (request, response, authentication) -> {
-            try {
-                String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-                response.sendRedirect(issuer + "v2/logout?client_id=" + clientId + "&returnTo=" + baseUrl);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        };
     }
 
     @Bean
