@@ -28,25 +28,6 @@ public class LoginController {
     }
 
     /**
-     * Handles user login requests and returns user details.
-     * Legacy endpoint that returns user information.
-     *
-     * @param emailLoginRequest The login request containing email and password
-     * @return ResponseEntity with Auth0UserDto if authentication is successful
-     */
-    @PostMapping("/login")
-    public ResponseEntity<Auth0UserDto> login(@Valid @RequestBody EmailLoginRequest emailLoginRequest) {
-        log.debug("Login request received for email: {}", emailLoginRequest.getEmail());
-
-        Auth0UserDto userDto = loginService.handleLogin(
-                emailLoginRequest.getEmail(),
-                emailLoginRequest.getPassword()
-        );
-
-        return ResponseEntity.ok(userDto);
-    }
-
-    /**
      * API login endpoint that returns JWT tokens for API/mobile clients.
      * This endpoint is designed for programmatic access and returns access tokens.
      *
