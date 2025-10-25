@@ -26,7 +26,7 @@ public class EmployeeDataService {
      * @throws NoValidDtoException if the provided DTO is null
      */
     @Transactional(rollbackFor = Exception.class)
-    public void save(Auth0RegistrationDto employeeDto) {
+    public EmployeeData save(Auth0RegistrationDto employeeDto) {
         if (employeeDto == null) {
             log.error("Employee data save attempt failed, Auth0RegistrationDto is null");
             throw new NoValidDtoException();
@@ -34,8 +34,9 @@ public class EmployeeDataService {
 
         EmployeeData employeeData = EmployeeData.fromAuth0Dto(employeeDto);
 
-        employeeDataRepository.save(employeeData);
+        EmployeeData employee = employeeDataRepository.save(employeeData);
         log.info("Employee data saved successfully for username: {}", employeeData.getUsername());
+        return employee;
     }
 
     /**

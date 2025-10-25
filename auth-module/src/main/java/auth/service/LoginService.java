@@ -2,6 +2,8 @@ package auth.service;
 
 import auth.dto.login.TokenResponseDto;
 import auth.exceptions.AuthenticationFailedException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -13,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -29,16 +32,16 @@ public class LoginService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${auth0.m2m.audience}")
+    @Value("${auth0.audience}")
     private String audience;
 
-    @Value("${auth0.m2m.domain}")
+    @Value("${auth0.domain}")
     private String domain;
 
-    @Value("${auth0.m2m.clientId}")
+    @Value("${auth0.clientId}")
     private String clientId;
 
-    @Value("${auth0.m2m.clientSecret}")
+    @Value("${auth0.clientSecret}")
     private String clientSecret;
 
     @Value("${auth0.connection:Username-Password-Authentication}")
@@ -76,6 +79,7 @@ public class LoginService {
 //            findUserIdOrThrowAuthException(email);
 
             log.info("API authentication successful for user: {}", email);
+            logToken(tokenResponse);
             return tokenResponse;
         } catch (HttpClientErrorException e) {
             log.error("API authentication failed for user {}: {}", email, e.getMessage());
@@ -87,6 +91,23 @@ public class LoginService {
             log.error("Error during API login process for user {}: {}", email, e.getMessage());
             throw new RuntimeException("API login process failed", e);
         }
+    }
+
+    void logToken(TokenResponseDto tokenResponseDto) throws JsonProcessingException {
+        String token = tokenResponseDto.getAccess_token();
+        String[] parts = token.split("\\.");
+
+        if (parts.length == 3) {
+            String payload = new String(Base64.getDecoder().decode(parts[1]));
+            log.info("Token Payload: {}", payload);
+
+            // Or pretty print as JSON
+            ObjectMapper mapper = new ObjectMapper();
+            Object json = mapper.readValue(payload, Object.class);
+            log.info("Token Payload (formatted): {}",
+                    mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
+        }
+
     }
 
 //    /**

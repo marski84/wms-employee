@@ -36,9 +36,16 @@ public class EmployeeAuthDataDto {
         }
 
         String derivedNickname = registrationDto.getName();
-        String derivedUsername = (registrationDto.getEmail() != null) ?
-                registrationDto.getEmail().split("@")[0] :
-                (registrationDto.getName() + registrationDto.getSurname()).toLowerCase().replaceAll("\\s+", "");
+
+        // Generate username from email or name, ensuring it's between 1-15 characters (Auth0 requirement)
+        String derivedUsername;
+        if (registrationDto.getEmail() != null) {
+            String emailPrefix = registrationDto.getEmail().split("@")[0];
+            derivedUsername = emailPrefix.length() > 15 ? emailPrefix.substring(0, 15) : emailPrefix;
+        } else {
+            String combined = (registrationDto.getName() + registrationDto.getSurname()).toLowerCase().replaceAll("\\s+", "");
+            derivedUsername = combined.length() > 15 ? combined.substring(0, 15) : combined;
+        }
 
         Auth0RegistrationDto.UserMetadataDto metadata = null;
         if (registrationDto.getPhoneNumber() != null) {

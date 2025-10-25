@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.localhost.wmsemployee.dto.registration.EmployeeRegistrationDto;
 import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,11 +23,13 @@ public class EmployeeCommandController {
 
     /**
      * Registers a new employee in the system and Auth0.
+     * Requires: create:users permission from the JWT token.
      *
      * @param employeeRegistrationDto The employee registration data
      * @return Auth0RegistrationDto containing the Auth0 response with user details
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('SCOPE_create:users')")
     Auth0RegistrationDto registerEmployee(@RequestBody @Valid EmployeeRegistrationDto employeeRegistrationDto) {
         return employeeCommandService.registerEmployee(employeeRegistrationDto);
     }

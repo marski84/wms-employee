@@ -30,7 +30,7 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issuer;
 
-    @Value("${auth0.m2m.audience}")
+    @Value("${auth0.audience}")
     private String audience;
 
     @Bean
@@ -58,7 +58,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/auth/token").permitAll() // API login endpoints
-                        .requestMatchers("/api/employee/**").authenticated() // Employee endpoints require JWT
+                        .requestMatchers("/api/employee").authenticated() // Employee registration requires JWT + @PreAuthorize
                         .requestMatchers("/api/private/**").authenticated()
                         .requestMatchers("/api/admin/**").hasAuthority("SCOPE_admin")
                         .anyRequest().denyAll() // Deny all other requests (no web pages)
