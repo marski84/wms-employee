@@ -2,6 +2,7 @@ package org.localhost.wmsemployee.controller;
 
 import auth.dto.login.Auth0UserDto;
 import org.localhost.wmsemployee.service.employee.EmployeeQueryService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,8 +23,9 @@ public class EmployeeQueryController {
      * @return The details of the employee with the given user ID.
      */
     @GetMapping("/details/{userId}")
+    @PreAuthorize("hasAuthority('SCOPE_user')")
     public Auth0UserDto getUserDetailsByUserId(@PathVariable String userId, @RequestHeader("Authorization") String accessToken) {
-        return employeeQueryService.getEmployeeDetailsByUserId(userId, accessToken);
+        return employeeQueryService.getEmployeeDetailsByUserId(userId);
     }
 
     /**

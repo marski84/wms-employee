@@ -1,10 +1,12 @@
 package org.localhost.wmsemployee.service.employee;
 
+import auth.service.Auth0ManagementTokenService;
 import lombok.extern.slf4j.Slf4j;
 import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.localhost.wmsemployee.dto.registration.EmployeeRegistrationDto;
+import org.localhost.wmsemployee.model.RoleMapping.Auth0RoleMapping;
+import org.localhost.wmsemployee.model.enumeration.EmployeeRole;
 import org.localhost.wmsemployee.service.auth.model.EmployeeData;
-import org.localhost.wmsemployee.service.auth.service.Auth0ManagementTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -50,6 +52,9 @@ public class EmployeeCommandService {
     @Transactional(rollbackFor = Exception.class)
     public Auth0RegistrationDto registerEmployee(EmployeeRegistrationDto employeeRegistrationDto) {
         Auth0RegistrationDto employeeDto = createAuth0User(employeeRegistrationDto);
+        if (true) {
+            assignRoleToUser(employeeRegistrationDto.getEmployeeRole(), employeeDto.getUserId());
+        }
 
         try {
             EmployeeData registeredEmployee = employeeDataService.save(employeeDto);
@@ -113,5 +118,14 @@ public class EmployeeCommandService {
                 auth0UsersEndpoint, auth0Connection);
 
         return restTemplate.postForObject(auth0UsersEndpoint, request, Auth0RegistrationDto.class);
+    }
+
+
+    private void assignRoleToUser(EmployeeRole employeeRole, String auth0UserId) {
+        String auth0EmployeeRole = Auth0RoleMapping.getRoleId(employeeRole.getRoleId());
+
+        String roleEndpoint = auth0UsersEndpoint + "/" + auth0UserId + "/roles";
+
+
     }
 }

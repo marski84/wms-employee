@@ -16,11 +16,14 @@ import java.time.ZonedDateTime;
  * Contains employee details including user metadata.
  */
 @Getter
-@Builder
 @ToString
 @EqualsAndHashCode
 @AllArgsConstructor
+@Builder
 public class Auth0UserDto {
+
+    public Auth0UserDto() {
+    }
 
     @JsonProperty("created_at")
     @NotNull(message = "Created date cannot be null")
@@ -59,6 +62,8 @@ public class Auth0UserDto {
     @Builder
     @ToString
     @EqualsAndHashCode
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class UserMetadata {
 
         @NotBlank(message = "Phone number cannot be blank")

@@ -5,6 +5,7 @@ import org.localhost.wmsemployee.config.validator.AudienceValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,6 +25,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true) // Enable @PreAuthorize and @PostAuthorize annotations
 @Slf4j
 public class SecurityConfig {
 
@@ -58,7 +60,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/auth/token").permitAll() // API login endpoints
-                        .requestMatchers("/api/employee").authenticated() // Employee registration requires JWT + @PreAuthorize
+                        .requestMatchers("/api/employee/**").authenticated() // Employee registration requires JWT + @PreAuthorize
                         .requestMatchers("/api/private/**").authenticated()
                         .requestMatchers("/api/admin/**").hasAuthority("SCOPE_admin")
                         .anyRequest().denyAll() // Deny all other requests (no web pages)
@@ -90,7 +92,7 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter customJwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
-        converter.setAuthoritiesClaimName("permissions");
+        converter.setAuthoritiesClaimName("user_roles");
         converter.setAuthorityPrefix("SCOPE_");
 
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();

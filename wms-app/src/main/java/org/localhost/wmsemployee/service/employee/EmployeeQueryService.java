@@ -1,12 +1,12 @@
 package org.localhost.wmsemployee.service.employee;
 
 import auth.dto.login.Auth0UserDto;
+import auth.service.Auth0ManagementTokenService;
 import jakarta.persistence.EntityNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.localhost.wmsemployee.exceptions.EmployeeNotFoundException;
 import org.localhost.wmsemployee.service.auth.model.EmployeeData;
-import org.localhost.wmsemployee.service.auth.service.Auth0ManagementTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,23 +32,6 @@ public class EmployeeQueryService {
         this.employeeDataService = employeeDataService;
         this.auth0ManagementTokenService = auth0ManagementTokenService;
         this.restTemplate = restTemplate;
-    }
-
-    /**
-     * Retrieves the details of an employee by their user ID.
-     *
-     * @param userId      The ID of the user.
-     * @param accessToken The access token required to authenticate the request.
-     * @return The details of the employee with the given user ID.
-     */
-    public Auth0UserDto getEmployeeDetailsByUserId(String userId, String accessToken) {
-        String userDetailsUrl = usersEndpoint + "/" + userId;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + accessToken);
-
-        ResponseEntity<Auth0UserDto> userResponse = restTemplate.getForEntity(userDetailsUrl, Auth0UserDto.class, headers);
-        return userResponse.getBody();
     }
 
     /**

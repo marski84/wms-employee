@@ -1,4 +1,4 @@
-package org.localhost.wmsemployee.service.auth.model;
+package auth.dto.login;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

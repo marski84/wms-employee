@@ -1,10 +1,10 @@
-package org.localhost.wmsemployee.service.auth.service;
+package auth.service;
 
+import auth.dto.login.ManagementTokenResponse;
+import auth.dto.login.ManagmentTokenRequestBody;
 import auth.exceptions.InvalidAuth0TokenResponseException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.localhost.wmsemployee.service.auth.model.ManagementTokenResponse;
-import org.localhost.wmsemployee.service.auth.model.ManagmentTokenRequestBody;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

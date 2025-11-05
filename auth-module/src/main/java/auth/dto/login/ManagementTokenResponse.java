@@ -1,4 +1,4 @@
-package org.localhost.wmsemployee.service.auth.model;
+package auth.dto.login;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

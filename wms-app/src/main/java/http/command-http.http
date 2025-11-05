@@ -1,9 +1,9 @@
 @hostname = localhost
 @port = 8080
 @baseUrl = http://{{hostname}}:{{port}}/api/employee
-@supervisorBaseUrl = http://{{hostname}}:{{port}}/api/supervisor
 @supervisorId = 2
-@employeeId = 1
+@employeeId = auth0%7C689e289afd3ad890a651f91e
+
 
 ### APPLICATION TESTS
 
@@ -85,69 +85,10 @@ Authorization: Bearer {{token}}
 }
 
 
-### Aktualizacja danych pracownika
-PUT {{baseUrl}}
+
+
+###---------------------------------------------
+GET {{baseUrl}}/details/{{employeeId}}
 Content-Type: application/json
-
-{
-  "employeeId": 1,
-  "name": "Jan",
-  "surname": "Kowalski",
-  "email": "jan.kowalski@example.com",
-  "phoneNumber": "+48123456789",
-  "status": "ACTIVE",
-  "address": "ul. Słoneczna 45",
-  "city": "Warszawa",
-  "postalCode": "00-001",
-  "country": "Polska"
-}
-
-### employye data update by supervisor
-PUT {{baseUrl}}
-Content-Type: application/json
-
-{
-  "employeeId": 1,
-  "name": "Zupdatowy",
-  "surname": "CRUD",
-  "email": "jan.kowalski@example.com",
-  "phoneNumber": "+48123456789",
-  "status": "ACTIVE",
-  "address": "ul. Słoneczna 45",
-  "city": "Warszawa",
-  "postalCode": "00-001",
-  "country": "Polska"
-}
-
-
-### update employee status
-PATCH {{supervisorBaseUrl}}/status
-Content-Type: application/json
-
-{
-  "employeeId": 1,
-  "managerId": 1,
-  "status": "HOLIDAY"
-}
-
-### update employee role
-PATCH {{supervisorBaseUrl}}/role
-Content-Type: application/json
-
-{
-  "employeeId": 1,
-  "managerId": 1,
-  "role": "MANAGER"
-}
-
-
-### update employee status by employee
-PATCH {{baseUrl}}/updateStatus
-Content-Type: application/json
-
-{
-  "employeeId": 1,
-  "managerId": 1,
-  "status": "SUSPENDED"
-}
+Authorization: Bearer {{token}}
 

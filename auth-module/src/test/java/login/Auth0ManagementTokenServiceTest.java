@@ -1,11 +1,11 @@
-package org.localhost.wmsemployee.service.auth;
+package login;
 
+import auth.dto.login.ManagementTokenResponse;
 import auth.exceptions.InvalidAuth0TokenResponseException;
+import auth.service.Auth0ManagementTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.localhost.wmsemployee.service.auth.model.ManagementTokenResponse;
-import org.localhost.wmsemployee.service.auth.service.Auth0ManagementTokenService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
