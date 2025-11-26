@@ -1,0 +1,94 @@
+@hostname = localhost
+@port = 8080
+@baseUrl = http://{{hostname}}:{{port}}/api/employee
+@supervisorId = 2
+@employeeId = auth0%7C689e289afd3ad890a651f91e
+
+
+### APPLICATION TESTS
+
+### Logowanie - pobierz token
+POST http://{{hostname}}:{{port}}/api/auth/token
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Password@666"
+}
+
+> {%
+    client.global.set("token", response.body.access_token);
+
+    // Generate random string
+    function randomString(length) {
+        const chars = 'abcdefghijklmnopqrstuvwxyz';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    // Generate random number
+    function randomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Generate random phone number
+    function randomPhone() {
+        return '+48' + randomNumber(100000000, 999999999);
+    }
+
+    // Generate random email with timestamp for uniqueness
+    // Keep the email prefix short (max 15 chars) to avoid Auth0 username length issues
+    function randomEmail() {
+        const timestamp = Date.now().toString().slice(-8); // Last 8 digits of timestamp
+        const random = randomNumber(1000, 9999);
+        return 'u' + timestamp + random + '@example.com'; // u + 8 digits + 4 digits = 13 chars (safe)
+    }
+
+    // Generate random city
+    function randomCity() {
+        const cities = ['Warszawa', 'Kraków', 'Wrocław', 'Poznań', 'Gdańsk', 'Szczecin', 'Łódź', 'Katowice'];
+        return cities[Math.floor(Math.random() * cities.length)];
+    }
+
+    // Store generated data
+    client.global.set('randName', randomString(6).charAt(0).toUpperCase() + randomString(5));
+    client.global.set('randSurname', randomString(8).charAt(0).toUpperCase() + randomString(7));
+    client.global.set('randEmail', randomEmail());
+    client.global.set('randPhone', randomPhone());
+    client.global.set('randAddress', 'ul. ' + randomString(10).charAt(0).toUpperCase() + randomString(9) + ' ' + randomNumber(1, 200));
+    client.global.set('randCity', randomCity());
+    client.global.set('randPostalCode', randomNumber(10, 99) + '-' + randomNumber(100, 999));
+%}
+
+### Rejestracja nowego pracownika
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "supervisorId": {{supervisorId}},
+  "name": "{{randName}}",
+  "surname": "{{randSurname}}",
+  "email": "{{randEmail}}",
+  "phoneNumber": "{{randPhone}}",
+  "password": "Password@123",
+  "confirmPassword": "Password@123",
+  "employeeRole": "EMPLOYEE",
+  "employeeStatus": "1",
+  "address": "{{randAddress}}",
+  "city": "{{randCity}}",
+  "postalCode": "{{randPostalCode}}",
+  "country": "Polska"
+}
+
+
+
+
+###---------------------------------------------
+GET {{baseUrl}}/details/{{employeeId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+

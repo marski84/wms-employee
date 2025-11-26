@@ -1,0 +1,54 @@
+package org.localhost.wmsemployee.controller;
+
+import auth.dto.login.Auth0UserDto;
+import org.localhost.wmsemployee.service.employee.EmployeeQueryService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/employee")
+public class EmployeeQueryController {
+    private final EmployeeQueryService employeeQueryService;
+
+    public EmployeeQueryController(EmployeeQueryService employeeQueryService) {
+        this.employeeQueryService = employeeQueryService;
+    }
+
+    /**
+     * Retrieves the details of an employee by their user ID.
+     * This endpoint requires an access token with the "read:users" scope.
+     *
+     * @param userId The ID of the user.
+     * @param accessToken The access token required to authenticate the request.
+     * @return The details of the employee with the given user ID.
+     */
+    @GetMapping("/details/{userId}")
+    @PreAuthorize("hasAuthority('SCOPE_user')")
+    public Auth0UserDto getUserDetailsByUserId(@PathVariable String userId, @RequestHeader("Authorization") String accessToken) {
+        return employeeQueryService.getEmployeeDetailsByUserId(userId);
+    }
+
+    /**
+     * Retrieves the details of an employee by their user ID.
+     * This endpoint requires an access token with the "read:users" scope.
+     *
+     * @param userId The ID of the user.
+     * @return The details of the employee with the given user ID.
+     * @throws SecurityException if the access token is missing or invalid.
+     */
+    @GetMapping("/admin/details/{userId}")
+    public Object getUserDetailsByUserId(@PathVariable String userId) {
+        return employeeQueryService.getEmployeeDetailsByUserId(userId);
+    }
+
+    /**
+     * Retrieves employee details by username.
+     *
+     * @param username The username of the employee to look up
+     * @return Auth0UserDto containing the employee details
+     */
+    @GetMapping("/by-username/{username}")
+    public Auth0UserDto getUserDetailsByUsername(@PathVariable String username) {
+        return employeeQueryService.getEmployeeDetailsByUsername(username);
+    }
+}
