@@ -117,6 +117,12 @@
             <artifactId>domain-module</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.localhost</groupId>
+            <artifactId>employee-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

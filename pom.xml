@@ -27,7 +27,6 @@
         <module>wms-app</module>
         <module>auth-module</module>
         <module>domain-module</module>
-        <module>user-module</module>
         <module>employee-module</module>
     </modules>
 

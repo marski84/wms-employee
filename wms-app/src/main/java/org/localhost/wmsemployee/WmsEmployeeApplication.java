@@ -4,11 +4,15 @@ import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
 @Slf4j
-@ComponentScan(basePackages = {"org.localhost.wmsemployee", "auth"})
+@Import({
+        org.localhost.wmsemployee.config.AppConfig.class,
+        employee.EmployeeConfig.class,
+        auth.AuthConfig.class
+})
 public class WmsEmployeeApplication {
 
     public static void main(String[] args) {

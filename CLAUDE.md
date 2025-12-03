@@ -35,7 +35,7 @@ docker compose up -d
 docker compose exec postgres chmod +x /docker-entrypoint-initdb.d/init-multiple-databases.sh
 
 # Build Liquibase image
-cd src/main/resources/db
+cd database/liquibase
 docker build -f Dockerfile -t employee-db .
 
 # Apply database migrations
@@ -52,6 +52,35 @@ docker run --rm \
   employee-db dropAll \
   --defaultsFile=/liquibase/liquibase-employee.properties
 ```
+
+### Database Structure (Modular Monolith)
+
+The project follows a **modular monolith** architecture with centralized database management:
+
+```
+database/
+├── liquibase/
+│   ├── Dockerfile                          # Liquibase container image
+│   ├── db.changelog-master.xml             # Master changelog referencing all modules
+│   ├── liquibase-employee.properties       # Database connection config
+│   └── changelog/
+│       ├── auth/                           # Auth0 integration module
+│       │   ├── 001-initial-schema.sql      # employee table (Auth0 metadata)
+│       │   └── 002-add-employee-metadata-columns.sql
+│       └── employee/                       # Employee management module
+│           └── 001-initial-schema.sql      # users, departments tables
+├── scripts/
+│   └── init-multiple-databases.sh          # PostgreSQL initialization script
+└── postgres/                               # (Reserved for custom Postgres config)
+```
+
+**Module Organization**:
+
+- **auth module**: Auth0 integration - stores Auth0 user metadata in `employee` table
+- **employee module**: Full employee management - `users` and `departments` tables with roles, status, hierarchies
+
+**Key Principle**: Each module owns its database tables, but all migrations are centralized in `/database` for
+consistent deployment and versioning across the modular monolith.
 
 ## Architecture
 
