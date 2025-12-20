@@ -8,7 +8,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,7 +23,6 @@ import java.util.Map;
  * - Dependency Inversion: Implements IAuthenticationService interface
  * - Open/Closed: Can be extended or replaced without changing existing code
  */
-@Service
 @Slf4j
 public class LoginService implements IAuthenticationService {
     // Constants for OAuth2 password grant flow
@@ -78,8 +76,6 @@ public class LoginService implements IAuthenticationService {
      */
     public TokenResponseDto handleApiLogin(String email, String password) {
         log.debug("Attempting API authentication for user with email: {}", email);
-
-//  TODO dodać roles do array permissions w auth0
 
         try {
             TokenResponseDto tokenResponse = authenticateAndGetTokens(email, password);
