@@ -3,7 +3,6 @@ package employee.dto;
 import employee.model.enumeration.EmployeeRole;
 import employee.model.enumeration.EmployeeStatus;
 
-import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -20,8 +19,6 @@ public record UserDto(
         EmployeeRole role,
         EmployeeStatus status,
         UUID departmentId,
-        String departmentName,
-        Instant createdAt,
-        Instant updatedAt
+        String departmentName
 ) {
 }

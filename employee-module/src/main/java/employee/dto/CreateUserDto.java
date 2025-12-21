@@ -3,10 +3,7 @@ package employee.dto;
 import employee.dto.validation.PasswordMatches;
 import employee.model.enumeration.EmployeeRole;
 import employee.model.enumeration.EmployeeStatus;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.util.UUID;
 
@@ -41,8 +38,10 @@ public record CreateUserDto(
         @Size(max = 100, message = "Job title must not exceed 100 characters")
         String jobTitle,
 
+        @NotNull(message = "Employee role is required")
         EmployeeRole role,
 
+        @NotNull(message = "Employee status is required")
         EmployeeStatus status,
 
         UUID departmentId

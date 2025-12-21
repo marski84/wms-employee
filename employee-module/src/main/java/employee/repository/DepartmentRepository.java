@@ -47,6 +47,7 @@ public interface DepartmentRepository extends JpaRepository<Department, UUID> {
      * @param id Department ID
      * @return Optional containing department with manager
      */
+//    TODO zweryfikować co w przypadku gdy manager == null
     @Query("SELECT d FROM Department d LEFT JOIN FETCH d.manager WHERE d.id = :id")
     Optional<Department> findByIdWithManager(@Param("id") UUID id);
 }

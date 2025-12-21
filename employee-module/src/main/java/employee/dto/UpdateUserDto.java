@@ -3,6 +3,7 @@ package employee.dto;
 import employee.model.enumeration.EmployeeRole;
 import employee.model.enumeration.EmployeeStatus;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -29,8 +30,10 @@ public record UpdateUserDto(
         @Size(max = 100, message = "Job title must not exceed 100 characters")
         String jobTitle,
 
+        @NotNull
         EmployeeRole role,
 
+        @NotNull
         EmployeeStatus status,
 
         UUID departmentId

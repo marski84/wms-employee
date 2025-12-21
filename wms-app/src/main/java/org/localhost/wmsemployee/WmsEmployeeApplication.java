@@ -9,15 +9,17 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @Slf4j
 @Import({
-        org.localhost.wmsemployee.config.AppConfig.class,
+        org.localhost.wmsemployee.config.HttpClientConfig.class,
         employee.EmployeeConfig.class,
         auth.AuthConfig.class
 })
 public class WmsEmployeeApplication {
 
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.configure().filename("auth0.env").load();
-        dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+        Dotenv dotenv = Dotenv.configure()
+                .filename("auth0.env")
+                .load();
+//        dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
         SpringApplication.run(WmsEmployeeApplication.class, args);
     }
 }

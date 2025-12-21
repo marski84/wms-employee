@@ -26,7 +26,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u " +
             "LEFT JOIN FETCH u.department d " +
             "LEFT JOIN FETCH d.manager")
-    List<User> findAllWithDetails();
+    List<User> findAllWithDepartmentAndManager();
 
     /**
      * Optimized fetch for a single user context.
@@ -39,7 +39,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             "LEFT JOIN FETCH u.department d " +
             "LEFT JOIN FETCH d.manager " +
             "WHERE u.id = :id")
-    Optional<User> findByIdWithDetails(@Param("id") UUID id);
+    Optional<User> findByIdWithDepartmentAndManager(@Param("id") UUID id);
 
     /**
      * Finds user by email address.

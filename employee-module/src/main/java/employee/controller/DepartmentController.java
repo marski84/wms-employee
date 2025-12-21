@@ -34,7 +34,7 @@ public class DepartmentController {
      */
     @PostMapping
     public ResponseEntity<DepartmentDto> createDepartment(@Valid @RequestBody CreateDepartmentDto dto) {
-        log.info("POST /api/departments - Creating department: {}", dto.name());
+        log.info("POST /api/departments - Creating department with data: {}", dto);
         DepartmentDto createdDepartment = departmentService.createDepartment(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDepartment);
     }

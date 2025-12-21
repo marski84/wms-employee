@@ -10,8 +10,7 @@ import employee.model.Department;
 import employee.model.User;
 import employee.model.enumeration.EmployeeRole;
 import employee.model.enumeration.EmployeeStatus;
-import employee.repository.DepartmentRepository;
-import employee.repository.UserRepository;
+import employee.repository.EmployeeDataAccess;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,9 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,10 +38,7 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private DepartmentRepository departmentRepository;
+    private EmployeeDataAccess dataAccess;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -79,8 +73,6 @@ class UserServiceTest {
                 .role(EmployeeRole.EMPLOYEE)
                 .status(EmployeeStatus.AVAILABLE)
                 .department(testDepartment)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
                 .build();
 
         createUserDto = new CreateUserDto(
@@ -101,10 +93,10 @@ class UserServiceTest {
     @DisplayName("Should create user successfully")
     void testCreateUser_Success() {
         // Given
-        when(userRepository.existsByEmail(createUserDto.email())).thenReturn(false);
-        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(dataAccess.userEmailExists(createUserDto.email())).thenReturn(false);
+        when(dataAccess.getDepartmentOrThrow(departmentId)).thenReturn(testDepartment);
         when(passwordEncoder.encode(createUserDto.password())).thenReturn("hashedPassword123");
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(dataAccess.saveUser(any(User.class))).thenReturn(testUser);
 
         // When
         UserDto result = userService.createUser(createUserDto);
@@ -121,7 +113,7 @@ class UserServiceTest {
 
         // Verify user was saved
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository, times(1)).save(userCaptor.capture());
+        verify(dataAccess, times(1)).saveUser(userCaptor.capture());
         User savedUser = userCaptor.getValue();
         assertThat(savedUser.getPassword()).isEqualTo("hashedPassword123");
     }
@@ -130,7 +122,7 @@ class UserServiceTest {
     @DisplayName("Should throw EmailAlreadyExistsException when email exists")
     void testCreateUser_EmailExists() {
         // Given
-        when(userRepository.existsByEmail(createUserDto.email())).thenReturn(true);
+        when(dataAccess.userEmailExists(createUserDto.email())).thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> userService.createUser(createUserDto))
@@ -138,29 +130,29 @@ class UserServiceTest {
                 .hasMessageContaining("john.doe@example.com");
 
         // Verify user was not saved
-        verify(userRepository, never()).save(any(User.class));
+        verify(dataAccess, never()).saveUser(any(User.class));
     }
 
     @Test
     @DisplayName("Should throw DepartmentNotFoundException when department does not exist")
     void testCreateUser_DepartmentNotFound() {
         // Given
-        when(userRepository.existsByEmail(createUserDto.email())).thenReturn(false);
-        when(departmentRepository.findById(departmentId)).thenReturn(Optional.empty());
+        when(dataAccess.userEmailExists(createUserDto.email())).thenReturn(false);
+        when(dataAccess.getDepartmentOrThrow(departmentId)).thenThrow(new DepartmentNotFoundException(departmentId));
 
         // When & Then
         assertThatThrownBy(() -> userService.createUser(createUserDto))
                 .isInstanceOf(DepartmentNotFoundException.class)
                 .hasMessageContaining(departmentId.toString());
 
-        verify(userRepository, never()).save(any(User.class));
+        verify(dataAccess, never()).saveUser(any(User.class));
     }
 
     @Test
     @DisplayName("Should get user by ID successfully")
     void testGetUserById_Success() {
         // Given
-        when(userRepository.findByIdWithDetails(userId)).thenReturn(Optional.of(testUser));
+        when(dataAccess.getUserWithDepartmentOrThrow(userId)).thenReturn(testUser);
 
         // When
         UserDto result = userService.getUserById(userId);
@@ -169,14 +161,14 @@ class UserServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(userId);
         assertThat(result.email()).isEqualTo("john.doe@example.com");
-        verify(userRepository, times(1)).findByIdWithDetails(userId);
+        verify(dataAccess, times(1)).getUserWithDepartmentOrThrow(userId);
     }
 
     @Test
     @DisplayName("Should throw UserNotFoundException when user not found")
     void testGetUserById_NotFound() {
         // Given
-        when(userRepository.findByIdWithDetails(userId)).thenReturn(Optional.empty());
+        when(dataAccess.getUserWithDepartmentOrThrow(userId)).thenThrow(new UserNotFoundException(userId));
 
         // When & Then
         assertThatThrownBy(() -> userService.getUserById(userId))
@@ -198,7 +190,7 @@ class UserServiceTest {
                 .status(EmployeeStatus.AVAILABLE)
                 .build();
 
-        when(userRepository.findAllWithDetails()).thenReturn(List.of(testUser, user2));
+        when(dataAccess.findAllUsersWithDepartmentAndManager()).thenReturn(List.of(testUser, user2));
 
         // When
         List<UserDto> results = userService.getAllUsers();
@@ -207,7 +199,7 @@ class UserServiceTest {
         assertThat(results).hasSize(2);
         assertThat(results.get(0).email()).isEqualTo("john.doe@example.com");
         assertThat(results.get(1).email()).isEqualTo("jane.smith@example.com");
-        verify(userRepository, times(1)).findAllWithDetails();
+        verify(dataAccess, times(1)).findAllUsersWithDepartmentAndManager();
     }
 
     @Test
@@ -225,15 +217,15 @@ class UserServiceTest {
                 null
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(dataAccess.getUserOrThrow(userId)).thenReturn(testUser);
+        when(dataAccess.saveUser(any(User.class))).thenReturn(testUser);
 
         // When
         UserDto result = userService.updateUser(userId, updateDto);
 
         // Then
         assertThat(result).isNotNull();
-        verify(userRepository, times(1)).save(testUser);
+        verify(dataAccess, times(1)).saveUser(testUser);
         assertThat(testUser.getName()).isEqualTo("Johnny");
         assertThat(testUser.getJobTitle()).isEqualTo("Senior Software Engineer");
         assertThat(testUser.getRole()).isEqualTo(EmployeeRole.MANAGER);
@@ -243,26 +235,26 @@ class UserServiceTest {
     @DisplayName("Should delete user successfully")
     void testDeleteUser_Success() {
         // Given
-        when(userRepository.existsById(userId)).thenReturn(true);
+        when(dataAccess.userExists(userId)).thenReturn(true);
 
         // When
         userService.deleteUser(userId);
 
         // Then
-        verify(userRepository, times(1)).deleteById(userId);
+        verify(dataAccess, times(1)).deleteUser(userId);
     }
 
     @Test
     @DisplayName("Should throw UserNotFoundException when deleting non-existent user")
     void testDeleteUser_NotFound() {
         // Given
-        when(userRepository.existsById(userId)).thenReturn(false);
+        when(dataAccess.userExists(userId)).thenReturn(false);
 
         // When & Then
         assertThatThrownBy(() -> userService.deleteUser(userId))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessageContaining(userId.toString());
 
-        verify(userRepository, never()).deleteById(any());
+        verify(dataAccess, never()).deleteUser(any());
     }
 }
