@@ -8,10 +8,7 @@ import employee.exception.EmailAlreadyExistsException;
 import employee.exception.UserNotFoundException;
 import employee.model.Department;
 import employee.model.User;
-import employee.model.enumeration.EmployeeRole;
-import employee.model.enumeration.EmployeeStatus;
-import employee.repository.DepartmentRepository;
-import employee.repository.UserRepository;
+import employee.repository.EmployeeDataAccess;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,8 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final DepartmentRepository departmentRepository;
+    private final EmployeeDataAccess dataAccess;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -46,7 +42,7 @@ public class UserService {
         log.info("Creating new user with email: {}", dto.email());
 
         // Check if email already exists
-        if (userRepository.existsByEmail(dto.email())) {
+        if (dataAccess.userEmailExists(dto.email())) {
             log.warn("Attempt to create user with existing email: {}", dto.email());
             throw new EmailAlreadyExistsException(dto.email());
         }
@@ -54,8 +50,7 @@ public class UserService {
         // Validate and fetch department if provided
         Department department = null;
         if (dto.departmentId() != null) {
-            department = departmentRepository.findById(dto.departmentId())
-                    .orElseThrow(() -> new DepartmentNotFoundException(dto.departmentId()));
+            department = dataAccess.getDepartmentOrThrow(dto.departmentId());
         }
 
         // Hash password
@@ -69,12 +64,12 @@ public class UserService {
                 .phoneNumber(dto.phoneNumber())
                 .password(hashedPassword)
                 .jobTitle(dto.jobTitle())
-                .role(dto.role() != null ? dto.role() : EmployeeRole.EMPLOYEE)
-                .status(dto.status() != null ? dto.status() : EmployeeStatus.AVAILABLE)
+                .role(dto.role())
+                .status(dto.status())
                 .department(department)
                 .build();
 
-        User savedUser = userRepository.save(user);
+        User savedUser = dataAccess.saveUser(user);
         log.info("User created successfully with ID: {}", savedUser.getId());
 
         return mapToDto(savedUser);
@@ -88,7 +83,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {
         log.debug("Fetching all users");
-        return userRepository.findAllWithDetails().stream()
+        return dataAccess.findAllUsersWithDepartmentAndManager().stream()
                 .map(this::mapToDto)
                 .toList();
     }
@@ -103,8 +98,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDto getUserById(UUID userId) {
         log.debug("Fetching user with ID: {}", userId);
-        User user = userRepository.findByIdWithDetails(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        User user = dataAccess.getUserWithDepartmentOrThrow(userId);
         return mapToDto(user);
     }
 
@@ -123,8 +117,7 @@ public class UserService {
     public UserDto updateUser(UUID userId, UpdateUserDto dto) {
         log.info("Updating user with ID: {}", userId);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        User user = dataAccess.getUserOrThrow(userId);
 
         // Update name if provided
         if (dto.name() != null) {
@@ -138,7 +131,7 @@ public class UserService {
 
         // Update email if provided and different
         if (dto.email() != null && !dto.email().equals(user.getEmail())) {
-            if (userRepository.existsByEmail(dto.email())) {
+            if (dataAccess.userEmailExists(dto.email())) {
                 throw new EmailAlreadyExistsException(dto.email());
             }
             user.setEmail(dto.email());
@@ -166,12 +159,11 @@ public class UserService {
 
         // Update department if provided
         if (dto.departmentId() != null) {
-            Department department = departmentRepository.findById(dto.departmentId())
-                    .orElseThrow(() -> new DepartmentNotFoundException(dto.departmentId()));
+            Department department = dataAccess.getDepartmentOrThrow(dto.departmentId());
             user.setDepartment(department);
         }
 
-        User updatedUser = userRepository.save(user);
+        User updatedUser = dataAccess.saveUser(user);
         log.info("User updated successfully: {}", userId);
 
         return mapToDto(updatedUser);
@@ -187,11 +179,11 @@ public class UserService {
     public void deleteUser(UUID userId) {
         log.info("Deleting user with ID: {}", userId);
 
-        if (!userRepository.existsById(userId)) {
+        if (!dataAccess.userExists(userId)) {
             throw new UserNotFoundException(userId);
         }
 
-        userRepository.deleteById(userId);
+        dataAccess.deleteUser(userId);
         log.info("User deleted successfully: {}", userId);
     }
 
@@ -210,9 +202,7 @@ public class UserService {
                 user.getRole(),
                 user.getStatus(),
                 user.getDepartment() != null ? user.getDepartment().getId() : null,
-                user.getDepartment() != null ? user.getDepartment().getName() : null,
-                user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getDepartment() != null ? user.getDepartment().getName() : null
         );
     }
 }

@@ -10,11 +10,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Build & Run
 ```bash
+# IMPORTANT: All commands should be run from the PROJECT ROOT directory
+
 # Build project
 mvn clean install
 
-# Run application (requires auth0.env file with Auth0 credentials)
-mvn spring-boot:run
+# Run application (requires auth0.env file in project root)
+mvn spring-boot:run -pl wms-app
 
 # Run specific test class
 mvn test -Dtest=EmployeeCommandServiceTest
@@ -25,7 +27,8 @@ mvn test -Dtest=EmployeeCommandServiceTest#testMethodName
 
 ### Database Management
 
-The project uses PostgreSQL with Liquibase for schema management. Database operations require Docker:
+The project uses PostgreSQL with **Liquibase integrated into Spring Boot** for schema management. Database migrations
+run **automatically on application startup**.
 
 ```bash
 # Start infrastructure (PostgreSQL, RabbitMQ, NATS)
@@ -34,24 +37,26 @@ docker compose up -d
 # Initialize database permissions (first time only)
 docker compose exec postgres chmod +x /docker-entrypoint-initdb.d/init-multiple-databases.sh
 
-# Build Liquibase image
-cd database/liquibase
-docker build -f Dockerfile -t employee-db .
-
-# Apply database migrations
-docker run --rm \
-  --network=wms-employee_microservices-network \
-  --name liquibase-employee-run \
-  --entrypoint liquibase employee-db update \
-  --defaultsFile=/liquibase/liquibase-employee.properties
-
-# Drop all database objects
-docker run --rm \
-  --network=wms-employee_microservices-network \
-  --name liquibase-employee-run \
-  employee-db dropAll \
-  --defaultsFile=/liquibase/liquibase-employee.properties
+# Run application - Liquibase migrations run automatically
+mvn spring-boot:run
 ```
+
+**Adding New Migrations:**
+
+1. Create new SQL file in `/database/liquibase/changelog/users/` (e.g., `003-add-new-column.sql`)
+2. Add reference to `/database/liquibase/db.changelog-master.xml`:
+   ```xml
+   <include file="changelog/users/003-add-new-column.sql" relativeToChangelogFile="true"/>
+   ```
+3. Run the application - migration applies automatically on startup
+
+**Configuration:**
+
+- Liquibase changelog location: `file:database/liquibase/db.changelog-master.xml` (configured in
+  `application.properties`)
+- Changelogs are stored **outside** the application module in `/database/liquibase/` for centralized database management
+- Spring Boot's Liquibase reads changesets on startup and applies only new migrations
+- Application must be run from **project root** for Liquibase paths to resolve correctly
 
 ### Database Structure (Modular Monolith)
 
@@ -161,7 +166,7 @@ Global exception handler (`GlobalExceptionHandler`) provides centralized error r
 
 ### Configuration Requirements
 
-Create `auth0.env` in project root with:
+Create `auth0.env` in **project root directory** (`wms-employee/auth0.env`) with:
 - `AUTH_DOMAIN` - Auth0 tenant domain
 - `AUTH_CLIENT_ID` - Auth0 application client ID
 - `AUTH_CLIENT_SECRET` - Auth0 application client secret
@@ -169,6 +174,9 @@ Create `auth0.env` in project root with:
 - `AUTH_MGT_TOKEN_URL` - Auth0 Management API token URL
 
 The application loads these via `Dotenv` on startup (`WmsEmployeeApplication:14`).
+
+**Important**: The application expects `auth0.env` in the current working directory, so always run the application from
+the project root using `mvn spring-boot:run -pl wms-app`.
 
 **Auth0 Application Settings**:
 - **Grant Types**: Must enable "Password" grant type for Resource Owner Password Grant flow

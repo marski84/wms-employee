@@ -47,7 +47,7 @@ Authorization: Bearer {{token}}
 
 
 ### login
-POST localhost:8080/api/auth/login
+POST localhost:8080/api/auth/token
 Content-Type: application/json
 
 {

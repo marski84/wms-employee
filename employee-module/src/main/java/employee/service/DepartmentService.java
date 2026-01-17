@@ -8,8 +8,7 @@ import employee.exception.DepartmentNotFoundException;
 import employee.exception.UserNotFoundException;
 import employee.model.Department;
 import employee.model.User;
-import employee.repository.DepartmentRepository;
-import employee.repository.UserRepository;
+import employee.repository.EmployeeDataAccess;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,8 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DepartmentService {
 
-    private final DepartmentRepository departmentRepository;
-    private final UserRepository userRepository;
+    private final EmployeeDataAccess dataAccess;
 
     /**
      * Creates a new department.
@@ -43,7 +41,7 @@ public class DepartmentService {
         log.info("Creating new department with name: {}", dto.name());
 
         // Check if department name already exists
-        if (departmentRepository.existsByName(dto.name())) {
+        if (dataAccess.departmentNameExists(dto.name())) {
             log.warn("Attempt to create department with existing name: {}", dto.name());
             throw new DepartmentNameAlreadyExistsException(dto.name());
         }
@@ -51,8 +49,7 @@ public class DepartmentService {
         // Validate and fetch manager if provided
         User manager = null;
         if (dto.managerId() != null) {
-            manager = userRepository.findById(dto.managerId())
-                    .orElseThrow(() -> new UserNotFoundException(dto.managerId()));
+            manager = dataAccess.getUserOrThrow(dto.managerId());
         }
 
         // Build department entity
@@ -61,7 +58,7 @@ public class DepartmentService {
                 .manager(manager)
                 .build();
 
-        Department savedDepartment = departmentRepository.save(department);
+        Department savedDepartment = dataAccess.saveDepartment(department);
         log.info("Department created successfully with ID: {}", savedDepartment.getId());
 
         return mapToDto(savedDepartment);
@@ -75,7 +72,7 @@ public class DepartmentService {
     @Transactional(readOnly = true)
     public List<DepartmentDto> getAllDepartments() {
         log.debug("Fetching all departments");
-        return departmentRepository.findAllWithManagers().stream()
+        return dataAccess.findAllDepartmentsWithManagers().stream()
                 .map(this::mapToDto)
                 .toList();
     }
@@ -90,8 +87,7 @@ public class DepartmentService {
     @Transactional(readOnly = true)
     public DepartmentDto getDepartmentById(UUID departmentId) {
         log.debug("Fetching department with ID: {}", departmentId);
-        Department department = departmentRepository.findByIdWithManager(departmentId)
-                .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
+        Department department = dataAccess.getDepartmentWithManagerOrThrow(departmentId);
         return mapToDto(department);
     }
 
@@ -110,12 +106,11 @@ public class DepartmentService {
     public DepartmentDto updateDepartment(UUID departmentId, UpdateDepartmentDto dto) {
         log.info("Updating department with ID: {}", departmentId);
 
-        Department department = departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
+        Department department = dataAccess.getDepartmentOrThrow(departmentId);
 
         // Update name if provided and different
         if (dto.name() != null && !dto.name().equals(department.getName())) {
-            if (departmentRepository.existsByName(dto.name())) {
+            if (dataAccess.departmentNameExists(dto.name())) {
                 throw new DepartmentNameAlreadyExistsException(dto.name());
             }
             department.setName(dto.name());
@@ -123,13 +118,12 @@ public class DepartmentService {
 
         // Update manager if provided
         if (dto.managerId() != null) {
-            User manager = userRepository.findById(dto.managerId())
-                    .orElseThrow(() -> new UserNotFoundException(dto.managerId()));
+            User manager = dataAccess.getUserOrThrow(dto.managerId());
             department.setManager(manager);
         }
 
-        Department updatedDepartment = departmentRepository.save(department);
-        log.info("Department updated successfully: {}", departmentId);
+        Department updatedDepartment = dataAccess.saveDepartment(department);
+        log.info("Department updated successfully: {}", updatedDepartment);
 
         return mapToDto(updatedDepartment);
     }
@@ -146,11 +140,11 @@ public class DepartmentService {
     public void deleteDepartment(UUID departmentId) {
         log.info("Deleting department with ID: {}", departmentId);
 
-        if (!departmentRepository.existsById(departmentId)) {
+        if (!dataAccess.departmentExists(departmentId)) {
             throw new DepartmentNotFoundException(departmentId);
         }
 
-        departmentRepository.deleteById(departmentId);
+        dataAccess.deleteDepartment(departmentId);
         log.info("Department deleted successfully: {}", departmentId);
     }
 

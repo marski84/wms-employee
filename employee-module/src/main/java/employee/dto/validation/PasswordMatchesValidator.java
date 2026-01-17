@@ -18,7 +18,7 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
     @Override
     public boolean isValid(CreateUserDto dto, ConstraintValidatorContext context) {
         if (dto == null) {
-            return true; // Let @NotNull handle null validation
+            return true; // Null objects are considered valid (unlikely with @RequestBody, but defensive)
         }
 
         String password = dto.password();

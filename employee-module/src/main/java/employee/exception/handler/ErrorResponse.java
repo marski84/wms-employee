@@ -1,34 +1,41 @@
 package employee.exception.handler;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import employee.exception.ErrorCode;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
  * Standardized error response structure for API errors.
- * Provides consistent error format across all endpoints.
+ * Provides consistent error format without exposing sensitive technical details.
  */
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
     private final ZonedDateTime timestamp;
     private final int status;
-    private final String error;
+    private final String errorCode;
     private final String message;
     private final String path;
-    private Map<String, String> validationErrors;
+    private final Map<String, String> validationErrors;
 
-    public ErrorResponse(HttpStatus status, String message, String path) {
+    public ErrorResponse(int status, ErrorCode errorCode, String path) {
         this.timestamp = ZonedDateTime.now();
-        this.status = status.value();
-        this.error = status.getReasonPhrase();
-        this.message = message;
+        this.status = status;
+        this.errorCode = errorCode.name();
+        this.message = errorCode.getDefaultMessage();
         this.path = path;
+        this.validationErrors = null;
     }
 
-    public ErrorResponse(HttpStatus status, String message, String path, Map<String, String> validationErrors) {
-        this(status, message, path);
+    public ErrorResponse(int status, ErrorCode errorCode, String path, Map<String, String> validationErrors) {
+        this.timestamp = ZonedDateTime.now();
+        this.status = status;
+        this.errorCode = errorCode.name();
+        this.message = errorCode.getDefaultMessage();
+        this.path = path;
         this.validationErrors = validationErrors;
     }
 }
