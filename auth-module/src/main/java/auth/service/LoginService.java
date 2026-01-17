@@ -9,7 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +39,7 @@ public class LoginService implements IAuthenticationService {
     private static final String AUTH0_TOKEN_ENDPOINT = "/oauth/token";
     private static final String HTTPS_PROTOCOL = "https://";
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     @Value("${auth0.audience}")
     private String audience;
@@ -59,10 +59,10 @@ public class LoginService implements IAuthenticationService {
     /**
      * Constructs a new LoginService with required dependencies.
      *
-     * @param restTemplate RestTemplate for making HTTP requests to Auth0
+     * @param restClient RestClient for making HTTP requests to Auth0
      */
-    public LoginService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public LoginService(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     /**
@@ -108,8 +108,12 @@ public class LoginService implements IAuthenticationService {
         HttpEntity<Map<String, Object>> request = createAuthenticationRequest(email, password);
 
         try {
-            ResponseEntity<TokenResponseDto> tokenResponse = restTemplate.postForEntity(
-                    authUrl, request, TokenResponseDto.class);
+            ResponseEntity<TokenResponseDto> tokenResponse = restClient.post()
+                    .uri(authUrl)
+                    .headers(headers -> headers.addAll(request.getHeaders()))
+                    .body(request.getBody())
+                    .retrieve()
+                    .toEntity(TokenResponseDto.class);
             if (tokenResponse.getStatusCode().is2xxSuccessful()) {
                 return tokenResponse.getBody();
             }

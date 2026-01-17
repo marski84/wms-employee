@@ -11,7 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -23,7 +23,7 @@ public class Auth0ManagementTokenService {
 
     private static final long EXPIRY_BUFFER_SECONDS = 5 * 600;
     private final String CLIENT_CREDENTIALS = "client_credentials";
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
     private final ReentrantLock refreshLock = new ReentrantLock();
 
 
@@ -38,8 +38,8 @@ public class Auth0ManagementTokenService {
     private volatile String cachedAccessToken;
     private volatile ZonedDateTime tokenExpiryTime;
 
-    public Auth0ManagementTokenService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public Auth0ManagementTokenService(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     @PostConstruct
@@ -146,7 +146,12 @@ public class Auth0ManagementTokenService {
             HttpEntity<ManagmentTokenRequestBody> request = createTokenRequest();
 
             try {
-                ResponseEntity<ManagementTokenResponse> response = restTemplate.postForEntity(tokenUrl, request, ManagementTokenResponse.class);
+                ResponseEntity<ManagementTokenResponse> response = restClient.post()
+                        .uri(tokenUrl)
+                        .headers(headers -> headers.addAll(request.getHeaders()))
+                        .body(request.getBody())
+                        .retrieve()
+                        .toEntity(ManagementTokenResponse.class);
                 ManagementTokenResponse responseBody = Objects.requireNonNull(response.getBody());
                 return processTokenResponse(responseBody);
             } catch (Exception e) {

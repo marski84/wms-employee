@@ -9,25 +9,33 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class Auth0ManagementTokenServiceTest {
 
     @Mock
-    private RestTemplate restTemplate;
+    private RestClient restClient;
+
+    @Mock
+    private RestClient.RequestBodyUriSpec requestBodyUriSpec;
+
+    @Mock
+    private RestClient.RequestBodySpec requestBodySpec;
+
+    @Mock
+    private RestClient.ResponseSpec responseSpec;
+
 
     @InjectMocks
     private Auth0ManagementTokenService tokenService;
@@ -39,6 +47,7 @@ class Auth0ManagementTokenServiceTest {
     private final String testAccessToken = "test-management-token";
     private final int expiresIn = 86400; // 24 hours
 
+
     @BeforeEach
     void setUp() {
         // Set configuration values using ReflectionTestUtils
@@ -48,25 +57,90 @@ class Auth0ManagementTokenServiceTest {
         ReflectionTestUtils.setField(tokenService, "tokenUrl", testTokenUrl);
     }
 
-    // ========== getAccessToken() Tests ==========
+    /**
+     * Sets up RestClient mock chain to return a successful response.
+     *
+     * @param tokenResponse The token response to return
+     */
+    private void mockSuccessfulTokenResponse(ManagementTokenResponse tokenResponse) {
+        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(tokenResponse);
 
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.headers(any())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toEntity(ManagementTokenResponse.class))
+                .thenReturn(responseEntity);
+    }
+
+    /**
+     * Sets up RestClient mock chain to throw an exception.
+     *
+     * @param exception The exception to throw
+     */
+    private void mockRestClientException(Exception exception) {
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.headers(any())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toEntity(ManagementTokenResponse.class))
+                .thenThrow(exception);
+    }
+
+    /**
+     * Sets up RestClient mock chain to return a response with null body.
+     */
+    private void mockRestClientNullResponse() {
+        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(null);
+
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.headers(any())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toEntity(ManagementTokenResponse.class))
+                .thenReturn(responseEntity);
+    }
+
+    /**
+     * Sets up RestClient mock chain to return different responses on successive calls.
+     * Use this when testing scenarios that require multiple API calls with different results.
+     *
+     * @param first  The response to return on the first call
+     * @param second The response to return on the second call
+     */
+    private void mockSequentialTokenResponses(ManagementTokenResponse first, ManagementTokenResponse second) {
+        ResponseEntity<ManagementTokenResponse> firstResponse = ResponseEntity.ok(first);
+        ResponseEntity<ManagementTokenResponse> secondResponse = ResponseEntity.ok(second);
+
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.headers(any())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toEntity(ManagementTokenResponse.class))
+                .thenReturn(firstResponse)
+                .thenReturn(secondResponse);
+    }
+
+
+
+    // ========== getAccessToken() Tests ==========
     @Test
     void getAccessToken_shouldReturnNewToken_whenNoTokenCached() {
         // Given
         ManagementTokenResponse tokenResponse = new ManagementTokenResponse(
                 testAccessToken, "openid profile", "Bearer", expiresIn);
-
-        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(tokenResponse);
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(responseEntity);
-
+        mockSuccessfulTokenResponse(tokenResponse);
         // When
         String result = tokenService.getAccessToken();
 
         // Then
         assertNotNull(result);
         assertEquals(testAccessToken, result);
-        verify(restTemplate, times(1)).postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class));
+        verify(restClient, times(1)).post();
     }
 
     @Test
@@ -75,9 +149,7 @@ class Auth0ManagementTokenServiceTest {
         ManagementTokenResponse tokenResponse = new ManagementTokenResponse(
                 testAccessToken, "openid profile", "Bearer", expiresIn);
 
-        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(tokenResponse);
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(responseEntity);
+        mockSuccessfulTokenResponse(tokenResponse);
 
         // When - First call caches the token
         String firstToken = tokenService.getAccessToken();
@@ -89,7 +161,7 @@ class Auth0ManagementTokenServiceTest {
         assertEquals(testAccessToken, firstToken);
         assertEquals(testAccessToken, secondToken);
         // Verify API was called only once (second call used cache)
-        verify(restTemplate, times(1)).postForEntity(anyString(), any(HttpEntity.class), eq(ManagementTokenResponse.class));
+        verify(restClient, times(1)).post();
     }
 
     @Test
@@ -101,9 +173,7 @@ class Auth0ManagementTokenServiceTest {
         ManagementTokenResponse newTokenResponse = new ManagementTokenResponse(
                 "new-token", "openid profile", "Bearer", expiresIn);
 
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(ResponseEntity.ok(expiredTokenResponse))
-                .thenReturn(ResponseEntity.ok(newTokenResponse));
+        mockSequentialTokenResponses(expiredTokenResponse, newTokenResponse);
 
         // When - First call caches expired token
         String firstToken = tokenService.getAccessToken();
@@ -111,7 +181,6 @@ class Auth0ManagementTokenServiceTest {
         // Wait for token to expire (considering 5*600 seconds buffer)
         // Set token expiry to past
         ReflectionTestUtils.setField(tokenService, "tokenExpiryTime", ZonedDateTime.now().minusHours(1));
-
         // Second call should refresh
         String secondToken = tokenService.getAccessToken();
 
@@ -119,7 +188,7 @@ class Auth0ManagementTokenServiceTest {
         assertEquals("expired-token", firstToken);
         assertEquals("new-token", secondToken);
         // Verify API was called twice (once for initial, once for refresh)
-        verify(restTemplate, times(2)).postForEntity(anyString(), any(HttpEntity.class), eq(ManagementTokenResponse.class));
+        verify(restClient, times(2)).post();
     }
 
     @Test
@@ -128,9 +197,7 @@ class Auth0ManagementTokenServiceTest {
         ManagementTokenResponse tokenResponse = new ManagementTokenResponse(
                 null, "openid profile", "Bearer", expiresIn);
 
-        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(tokenResponse);
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(responseEntity);
+        mockRestClientNullResponse();
 
         // When & Then
         InvalidAuth0TokenResponseException exception = assertThrows(
@@ -145,15 +212,13 @@ class Auth0ManagementTokenServiceTest {
     @Test
     void getAccessToken_shouldThrowException_whenHttpClientErrorOccurs() {
         // Given - HTTP error from Auth0
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenThrow(HttpClientErrorException.Unauthorized.create(
-                        HttpStatus.UNAUTHORIZED,
-                        "Unauthorized",
-                        org.springframework.http.HttpHeaders.EMPTY,
-                        new byte[0],
-                        null
-                ));
-
+        mockRestClientException(HttpClientErrorException.Unauthorized.create(
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized",
+                org.springframework.http.HttpHeaders.EMPTY,
+                new byte[0],
+                null
+        ));
         // When & Then
         InvalidAuth0TokenResponseException exception = assertThrows(
                 InvalidAuth0TokenResponseException.class,
@@ -167,8 +232,8 @@ class Auth0ManagementTokenServiceTest {
     @Test
     void getAccessToken_shouldThrowException_whenUnexpectedErrorOccurs() {
         // Given - Generic exception
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenThrow(new RuntimeException("Network error"));
+        mockRestClientException(new RuntimeException("Network error")
+        );
 
         // When & Then
         InvalidAuth0TokenResponseException exception = assertThrows(
@@ -184,9 +249,7 @@ class Auth0ManagementTokenServiceTest {
     @Test
     void getAccessToken_shouldHandleNullResponseBody() {
         // Given - Response entity with null body
-        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(null);
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(responseEntity);
+        mockRestClientNullResponse();
 
         // When & Then - Service wraps NullPointerException in InvalidAuth0TokenResponseException
         assertThrows(
@@ -202,10 +265,7 @@ class Auth0ManagementTokenServiceTest {
         ManagementTokenResponse tokenResponse = new ManagementTokenResponse(
                 testAccessToken, "openid profile", "Bearer", expirySeconds);
 
-        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(tokenResponse);
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(responseEntity);
-
+        mockSuccessfulTokenResponse(tokenResponse);
         // When
         ZonedDateTime before = ZonedDateTime.now();
         tokenService.getAccessToken();
@@ -230,9 +290,8 @@ class Auth0ManagementTokenServiceTest {
         ManagementTokenResponse tokenResponse = new ManagementTokenResponse(
                 testAccessToken, "openid profile", "Bearer", expiresIn);
 
-        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(tokenResponse);
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(responseEntity);
+        mockSuccessfulTokenResponse(tokenResponse);
+
 
         // When
         String result = tokenService.getAccessToken();
@@ -254,14 +313,13 @@ class Auth0ManagementTokenServiceTest {
         ManagementTokenResponse tokenResponse = new ManagementTokenResponse(
                 testAccessToken, "openid profile", "Bearer", expiresIn);
 
-        ResponseEntity<ManagementTokenResponse> responseEntity = ResponseEntity.ok(tokenResponse);
-        when(restTemplate.postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class)))
-                .thenReturn(responseEntity);
+        mockSuccessfulTokenResponse(tokenResponse);
 
         // When
         tokenService.getAccessToken();
 
         // Then - Verify request was made (implicitly tests createTokenRequest)
-        verify(restTemplate).postForEntity(eq(testTokenUrl), any(HttpEntity.class), eq(ManagementTokenResponse.class));
+        verify(restClient).post();
     }
+
 }
