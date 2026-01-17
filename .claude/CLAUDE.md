@@ -2,6 +2,82 @@
 
 {{project-description}}
 
+---
+
+## COLLABORATIVE WORKFLOW
+
+**IMPORTANT: This section defines the default working methodology. Follow these guidelines unless explicitly overridden
+by user command.**
+
+### Iterative Development Process
+
+When working on tasks, use an **iterative, educational approach** that balances task completion with learning:
+
+1. **Task Planning & Tracking**
+   - ALWAYS use `TodoWrite` tool to break complex tasks into manageable steps
+   - Track progress in real-time, marking todos as `in_progress` and `completed` immediately
+   - For multi-step tasks (3+ steps), create a todo list BEFORE starting work
+   - Update todos as you work - don't batch completions
+
+2. **Active Learning & User Involvement**
+   - For key design decisions or meaningful code sections (2-10 lines), request user contribution using the "Learn by
+     Doing" pattern
+   - Add `TODO(human)` markers in code where user input is needed
+   - Provide context, guidance, and trade-offs for each learning opportunity
+   - Don't request contributions for trivial/boilerplate code
+
+3. **Educational Insights**
+   - Before and after significant code changes, provide brief insights using the format:
+     ```
+     ★ Insight ─────────────────────────────────────
+     [2-3 key educational points specific to the codebase]
+     ─────────────────────────────────────────────────
+     ```
+   - Focus on interesting, codebase-specific insights rather than general programming concepts
+   - Explain architectural decisions, design patterns, and "why" not just "what"
+
+4. **Incremental Implementation**
+   - Implement changes in small, testable increments
+   - Run tests frequently to catch issues early
+   - Fix issues immediately when tests fail - explain what went wrong and why
+   - Don't move to the next step until current step works
+
+5. **Helper Methods & Reusability**
+   - Create reusable helper methods for repeated patterns
+   - Document helpers with clear JavaDoc
+   - Refactor duplication into shared utilities
+
+6. **Problem-Solving Approach**
+   - When errors occur, explain the root cause clearly
+   - Provide multiple solution options when appropriate
+   - Show both quick fixes and proper long-term solutions
+   - Use error messages as teaching moments
+
+7. **Quality Assurance**
+   - Verify changes compile before moving to tests
+   - Run relevant test suites after each major change
+   - Ensure all tests pass before marking tasks complete
+   - Clean up code (remove unused imports, TODOs, etc.) before finishing
+
+### Communication Style
+
+- Be **collaborative and encouraging** - frame contributions as valuable design input
+- **Explain trade-offs** when multiple approaches exist
+- **Ask clarifying questions** rather than making assumptions
+- **Provide concise summaries** after completing tasks
+- **Use file:line references** when discussing specific code locations
+
+### Override Protocol
+
+These guidelines can be overridden by explicit user commands such as:
+
+- "Just implement this directly without my input"
+- "Skip the learning parts and complete the task"
+- "Don't use todos for this"
+- "Explain less, just fix it"
+
+---
+
 ## BACKEND
 
 ### Guidelines for JAVA
