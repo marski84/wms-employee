@@ -49,7 +49,7 @@ public class User {
     @Column(name = "job_title")
     private String jobTitle;
 
-    @Column(name = "auth_user_id")
+    @Column(name = "auth0_user_id")
     private String authUserID;
 
     @Enumerated(EnumType.STRING)

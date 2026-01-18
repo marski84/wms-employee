@@ -61,7 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/auth/token", "/api/auth/login").permitAll() // API login endpoints - no JWT required
                         .requestMatchers("/api/employee/**").authenticated() // Employee registration requires JWT + @PreAuthorize
-                        .requestMatchers("/api/private/**").authenticated()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("SCOPE_admin")
                         .anyRequest().denyAll() // Deny all other requests (no web pages)
                 )

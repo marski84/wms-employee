@@ -92,3 +92,21 @@ GET {{baseUrl}}/details/{{employeeId}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
+###---------
+
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "{{randName}}",
+  "surname": "{{randSurname}}",
+  "email": "{{randEmail}}",
+  "phoneNumber": "{{randPhone}}",
+  "password": "Password@123",
+  "confirmPassword": "Password@123",
+  "jobTitle": "Warehouse Operator",
+  "role": "EMPLOYEE",
+  "status": "AVAILABLE",
+  "departmentId": null
+}
