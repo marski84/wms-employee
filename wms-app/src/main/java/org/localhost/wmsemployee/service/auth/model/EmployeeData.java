@@ -52,12 +52,11 @@ public class EmployeeData {
         }
 
         return EmployeeData.builder()
-                .userId(auth0Dto.getUserId())
-                .name(auth0Dto.getName())
-                .username(auth0Dto.getUsername())
-                .nickname(auth0Dto.getNickname())
-                .email(auth0Dto.getEmail())
-                .createdAt(ZonedDateTime.parse(auth0Dto.getCreatedAt()))
+                .userId(auth0Dto.userId())
+                .username(auth0Dto.username())
+                .nickname(auth0Dto.nickname())
+                .email(auth0Dto.email())
+                .createdAt(ZonedDateTime.parse(auth0Dto.createdAt()))
                 .updatedAt(ZonedDateTime.now())
                 .build();
     }

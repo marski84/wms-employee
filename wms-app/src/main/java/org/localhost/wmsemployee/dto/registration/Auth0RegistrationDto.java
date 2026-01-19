@@ -1,59 +1,25 @@
 package org.localhost.wmsemployee.dto.registration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-import org.localhost.wmsemployee.model.enumeration.EmployeeRole;
-import org.localhost.wmsemployee.model.enumeration.EmployeeStatus;
 
 /**
  * DTO representing the response from Auth0 after successful user registration.
- * This class maps the fields returned by Auth0's Management API when creating a new user.
+ * Maps the essential fields returned by Auth0's Management API when creating a new user.
+ *
+ * The user_id field is critical - it's stored as auth0_user_id in the local User entity
+ * to link the Auth0 identity with the local user record.
  */
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-public class Auth0RegistrationDto {
+public record Auth0RegistrationDto(
+        @JsonProperty("user_id")
+        String userId,
 
-    @JsonProperty("user_id")
-    private String userId;
+        String email,
 
-    private String email;
+        String nickname,
 
-    private String name;
+        String username,
 
-    private String nickname;
-
-    private String username;
-
-    @JsonProperty("created_at")
-    private String createdAt;
-
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Getter
-    @Setter
-    public static class UserMetadataDto {
-
-        private String phoneNumber;
-
-        private String address;
-
-        private String familyName;
-
-        private String city;
-
-        private String postalCode;
-
-        private String country;
-
-        private String roleId;
-
-        private EmployeeRole roleName;
-
-        private EmployeeStatus employeeStatus;
-
-    }
+        @JsonProperty("created_at")
+        String createdAt
+) {
 }

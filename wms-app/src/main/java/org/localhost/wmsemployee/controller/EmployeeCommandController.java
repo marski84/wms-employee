@@ -2,10 +2,10 @@ package org.localhost.wmsemployee.controller;
 
 import employee.dto.CreateUserDto;
 import employee.dto.UserDto;
-import employee.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.localhost.wmsemployee.config.SecurityRole;
+import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
@@ -14,37 +14,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller for employee command operations (create, update, delete).
+ * All endpoints require JWT authentication.
+ */
 @RequestMapping("/api/employee")
 @Validated
 @Slf4j
 @RestController
 public class EmployeeCommandController {
-    private final UserService userService;
 
-    public EmployeeCommandController(UserService userService) {
-        this.userService = userService;
+    private final EmployeeCommandService employeeCommandService;
+
+    public EmployeeCommandController(EmployeeCommandService employeeCommandService) {
+        this.employeeCommandService = employeeCommandService;
     }
 
     /**
      * Registers a new employee in the system and Auth0.
      * Requires: ADMIN or SUPERVISOR role in the JWT 'user_roles' claim.
      *
-     * @param employeeRegistrationDto The employee registration data
-     * @return Auth0RegistrationDto containing the Auth0 response with user details
+     * @param createUserDto The employee registration data
+     * @return UserDto containing the created user details
      */
     @PostMapping
     @PreAuthorize(SecurityRole.ADMIN_OR_SUPERVISOR)
-    UserDto registerEmployee(
-            @RequestBody @Valid CreateUserDto employeeRegistrationDto
-    ) {
-        // Log current user's authorities for debugging
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        log.info("=== Current User Authentication ===");
-        log.info("Principal: {}", auth.getPrincipal());
-        log.info("Authorities: {}", auth.getAuthorities());
-        auth.getAuthorities().forEach(a -> log.info("  Authority: {}", a.getAuthority()));
-        log.info("====================================");
+    public UserDto registerEmployee(@RequestBody @Valid CreateUserDto createUserDto) {
+        log.debug("Registering new employee with email: {}", createUserDto.email());
 
-        return userService.createUser(employeeRegistrationDto);
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        log.debug("Request by: {}, authorities: {}", auth.getName(), auth.getAuthorities());
+
+        return employeeCommandService.registerEmployee(createUserDto);
     }
 }
