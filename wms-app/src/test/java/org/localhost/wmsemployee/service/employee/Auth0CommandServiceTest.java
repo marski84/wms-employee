@@ -1,5 +1,6 @@
 package org.localhost.wmsemployee.service.employee;
 
+import auth.dto.registration.Auth0RegistrationDto;
 import auth.service.Auth0ManagementTokenService;
 import employee.dto.CreateUserDto;
 import employee.model.enumeration.EmployeeRole;
@@ -8,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;

@@ -1,10 +1,10 @@
 package org.localhost.wmsemployee.service.employee;
 
+import auth.dto.registration.Auth0RegistrationDto;
 import auth.service.Auth0ManagementTokenService;
 import employee.dto.CreateUserDto;
 import employee.model.enumeration.EmployeeRole;
 import lombok.extern.slf4j.Slf4j;
-import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

@@ -1,10 +1,10 @@
 package org.localhost.wmsemployee.service.employee;
 
+import auth.dto.registration.Auth0RegistrationDto;
 import employee.dto.CreateUserDto;
 import employee.dto.UserDto;
 import employee.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.localhost.wmsemployee.dto.registration.Auth0RegistrationDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
