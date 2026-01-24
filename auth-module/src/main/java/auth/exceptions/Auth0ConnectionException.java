@@ -7,7 +7,7 @@ package auth.exceptions;
  * - Connection refused
  * - DNS resolution failure
  * - Auth0 service temporarily unavailable (5xx errors)
- * <p>
+ *
  * This is typically a transient error that may succeed on retry.
  */
 public class Auth0ConnectionException extends Auth0ServiceException {

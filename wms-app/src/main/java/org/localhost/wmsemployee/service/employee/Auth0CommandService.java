@@ -1,6 +1,8 @@
 package org.localhost.wmsemployee.service.employee;
 
 import auth.dto.registration.Auth0RegistrationDto;
+import auth.dto.registration.Auth0UserCreationRequest;
+import auth.error.Auth0ErrorCode;
 import auth.exceptions.*;
 import auth.service.Auth0ManagementTokenService;
 import employee.dto.CreateUserDto;
@@ -14,9 +16,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Slf4j
 public class Auth0CommandService {
@@ -71,32 +70,31 @@ public class Auth0CommandService {
     private Auth0RegistrationDto createAuth0User(CreateUserDto createUserDto) {
         String managementToken = auth0ManagementTokenService.getAccessToken();
 
-        // Build user creation payload for Management API
-        Map<String, Object> userPayload = new LinkedHashMap<>();
-        userPayload.put("email", createUserDto.email());
-        userPayload.put("password", createUserDto.password());
-        userPayload.put("connection", auth0Connection);
-        userPayload.put("email_verified", false);
-
         // Generate username from email (extract part before @) with defensive check
         String username = createUserDto.email().contains("@")
                 ? createUserDto.email().split("@")[0]
                 : createUserDto.email();
-        userPayload.put("username", username);
 
         // Generate nickname from name and surname
         String nickname = createUserDto.name() + " " + createUserDto.surname();
-        userPayload.put("nickname", nickname);
 
-        // Store additional employee data in user_metadata
-        Map<String, Object> userMetadata = new LinkedHashMap<>();
-        userMetadata.put("name", createUserDto.name());
-        userMetadata.put("surname", createUserDto.surname());
-        userMetadata.put("phoneNumber", createUserDto.phoneNumber());
-        userMetadata.put("jobTitle", createUserDto.jobTitle());
-        userMetadata.put("role", createUserDto.role() != null ? createUserDto.role().name() : null);
-        userMetadata.put("status", createUserDto.status() != null ? createUserDto.status().name() : null);
-        userPayload.put("user_metadata", userMetadata);
+        // Build user creation request using type-safe DTO
+        Auth0UserCreationRequest request = Auth0UserCreationRequest.builder()
+                .email(createUserDto.email())
+                .password(createUserDto.password())
+                .connection(auth0Connection)
+                .emailVerified(false)
+                .username(username)
+                .nickname(nickname)
+                .userMetadata(Auth0UserCreationRequest.UserMetadata.builder()
+                        .name(createUserDto.name())
+                        .surname(createUserDto.surname())
+                        .phoneNumber(createUserDto.phoneNumber())
+                        .jobTitle(createUserDto.jobTitle())
+                        .role(createUserDto.role() != null ? createUserDto.role().name() : null)
+                        .status(createUserDto.status() != null ? createUserDto.status().name() : null)
+                        .build())
+                .build();
 
         log.info("Creating user in Auth0 using Management API: {} with connection: {}",
                 auth0UsersEndpoint, auth0Connection);
@@ -106,7 +104,7 @@ public class Auth0CommandService {
                     .uri(auth0UsersEndpoint)
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + managementToken)
-                    .body(userPayload)
+                    .body(request)
                     .retrieve()
                     .body(Auth0RegistrationDto.class);
 
@@ -118,37 +116,37 @@ public class Auth0CommandService {
                 log.error("User already exists in Auth0: {} - Response: {}",
                         createUserDto.email(), e.getResponseBodyAsString());
                 throw new Auth0UserAlreadyExistsException(
-                        "User with email " + createUserDto.email() + " already exists in Auth0", e);
+                        Auth0ErrorCode.USER_ALREADY_EXISTS.formatMessage(createUserDto.email()), e);
 
             } else if (statusCode == HttpStatus.BAD_REQUEST) {
                 log.error("Invalid user data for Auth0: {} - Response: {}",
                         createUserDto.email(), e.getResponseBodyAsString());
                 throw new Auth0ValidationException(
-                        "Failed to create Auth0 user: Invalid data or password requirements not met", e);
+                        Auth0ErrorCode.VALIDATION_ERROR.getMessage(), e);
 
             } else if (statusCode == HttpStatus.UNAUTHORIZED || statusCode == HttpStatus.FORBIDDEN) {
                 log.error("Auth0 permission denied ({}) - Response: {}",
                         e.getStatusCode(), e.getResponseBodyAsString());
                 throw new Auth0PermissionException(
-                        "Insufficient permissions to create Auth0 user. Check M2M token scopes.", e);
+                        Auth0ErrorCode.PERMISSION_DENIED.getMessage(), e);
 
             } else {
                 log.error("Unexpected Auth0 client error ({}) - Response: {}",
                         e.getStatusCode(), e.getResponseBodyAsString());
                 throw new Auth0ServiceException(
-                        "Unexpected error while creating Auth0 user: " + e.getMessage(), e);
+                        Auth0ErrorCode.UNEXPECTED_ERROR.formatMessage(e.getMessage()), e);
             }
 
         } catch (HttpServerErrorException e) {
             log.error("Auth0 service error ({}) - Response: {}",
                     e.getStatusCode(), e.getResponseBodyAsString());
             throw new Auth0ConnectionException(
-                    "Auth0 service temporarily unavailable. Please try again later.", e);
+                    Auth0ErrorCode.SERVICE_UNAVAILABLE.getMessage(), e);
 
         } catch (ResourceAccessException e) {
             log.error("Failed to connect to Auth0: {}", e.getMessage());
             throw new Auth0ConnectionException(
-                    "Cannot reach Auth0 service. Check network connectivity.", e);
+                    Auth0ErrorCode.NETWORK_ERROR.getMessage(), e);
         }
     }
 

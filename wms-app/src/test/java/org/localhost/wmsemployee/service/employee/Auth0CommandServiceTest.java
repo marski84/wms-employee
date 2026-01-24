@@ -1,6 +1,8 @@
 package org.localhost.wmsemployee.service.employee;
 
 import auth.dto.registration.Auth0RegistrationDto;
+import auth.dto.registration.Auth0UserCreationRequest;
+import auth.error.Auth0ErrorCode;
 import auth.exceptions.*;
 import auth.service.Auth0ManagementTokenService;
 import employee.dto.CreateUserDto;
@@ -22,7 +24,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,7 +101,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(AUTH0_USERS_ENDPOINT)).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class)).thenReturn(auth0Response);
 
@@ -121,38 +122,37 @@ class Auth0CommandServiceTest {
     }
 
     @Test
-    @DisplayName("Should build correct payload with user metadata")
-    @SuppressWarnings("unchecked")
-    void testRegisterInAuth0_PayloadStructure() {
+    @DisplayName("Should build correct DTO with user metadata")
+    void testRegisterInAuth0_DtoStructure() {
         // Given
         when(auth0ManagementTokenService.getAccessToken()).thenReturn(MANAGEMENT_TOKEN);
 
-        // Capture the payload
-        ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
-        setupRestClientMocksWithCaptor(payloadCaptor);
+        // Capture the DTO
+        ArgumentCaptor<Auth0UserCreationRequest> requestCaptor =
+                ArgumentCaptor.forClass(Auth0UserCreationRequest.class);
+        setupRestClientMocksWithCaptor(requestCaptor);
         when(responseSpec.body(Auth0RegistrationDto.class)).thenReturn(auth0Response);
 
         // When
         auth0CommandService.registerInAuth0(createUserDto);
 
         // Then
-        Map<String, Object> payload = payloadCaptor.getValue();
-        assertThat(payload).containsEntry("email", "john.doe@example.com");
-        assertThat(payload).containsEntry("password", "Password@123");
-        assertThat(payload).containsEntry("connection", AUTH0_CONNECTION);
-        assertThat(payload).containsEntry("email_verified", false);
-        assertThat(payload).containsEntry("username", "john.doe"); // extracted from email
-        assertThat(payload).containsEntry("nickname", "John Doe"); // name + surname
+        Auth0UserCreationRequest request = requestCaptor.getValue();
+        assertThat(request.email()).isEqualTo("john.doe@example.com");
+        assertThat(request.password()).isEqualTo("Password@123");
+        assertThat(request.connection()).isEqualTo(AUTH0_CONNECTION);
+        assertThat(request.emailVerified()).isFalse();
+        assertThat(request.username()).isEqualTo("john.doe"); // extracted from email
+        assertThat(request.nickname()).isEqualTo("John Doe"); // name + surname
 
-        // Verify user_metadata
-        @SuppressWarnings("unchecked")
-        Map<String, Object> metadata = (Map<String, Object>) payload.get("user_metadata");
-        assertThat(metadata).containsEntry("name", "John");
-        assertThat(metadata).containsEntry("surname", "Doe");
-        assertThat(metadata).containsEntry("phoneNumber", "+48123456789");
-        assertThat(metadata).containsEntry("jobTitle", "Software Engineer");
-        assertThat(metadata).containsEntry("role", "EMPLOYEE");
-        assertThat(metadata).containsEntry("status", "AVAILABLE");
+        // Verify user metadata
+        Auth0UserCreationRequest.UserMetadata metadata = request.userMetadata();
+        assertThat(metadata.name()).isEqualTo("John");
+        assertThat(metadata.surname()).isEqualTo("Doe");
+        assertThat(metadata.phoneNumber()).isEqualTo("+48123456789");
+        assertThat(metadata.jobTitle()).isEqualTo("Software Engineer");
+        assertThat(metadata.role()).isEqualTo("EMPLOYEE");
+        assertThat(metadata.status()).isEqualTo("AVAILABLE");
     }
 
     @Test
@@ -181,7 +181,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new RuntimeException("Auth0 API returned 409 Conflict"));
@@ -194,7 +194,6 @@ class Auth0CommandServiceTest {
 
     @Test
     @DisplayName("Should handle null role and status gracefully")
-    @SuppressWarnings("unchecked")
     void testRegisterInAuth0_NullRoleAndStatus() {
         // Given
         CreateUserDto dtoWithNulls = new CreateUserDto(
@@ -211,21 +210,20 @@ class Auth0CommandServiceTest {
         );
 
         when(auth0ManagementTokenService.getAccessToken()).thenReturn(MANAGEMENT_TOKEN);
-        setupRestClientMocks();
-        when(responseSpec.body(Auth0RegistrationDto.class)).thenReturn(auth0Response);
 
-        ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
-        when(requestBodySpec.body(payloadCaptor.capture())).thenReturn(requestBodySpec);
+        ArgumentCaptor<Auth0UserCreationRequest> requestCaptor =
+                ArgumentCaptor.forClass(Auth0UserCreationRequest.class);
+        setupRestClientMocksWithCaptor(requestCaptor);
+        when(responseSpec.body(Auth0RegistrationDto.class)).thenReturn(auth0Response);
 
         // When
         auth0CommandService.registerInAuth0(dtoWithNulls);
 
         // Then
-        Map<String, Object> payload = payloadCaptor.getValue();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> metadata = (Map<String, Object>) payload.get("user_metadata");
-        assertThat(metadata.get("role")).isNull();
-        assertThat(metadata.get("status")).isNull();
+        Auth0UserCreationRequest request = requestCaptor.getValue();
+        Auth0UserCreationRequest.UserMetadata metadata = request.userMetadata();
+        assertThat(metadata.role()).isNull();
+        assertThat(metadata.status()).isNull();
     }
 
     @Test
@@ -237,7 +235,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT, "User already exists"));
@@ -245,8 +243,7 @@ class Auth0CommandServiceTest {
         // When & Then
         assertThatThrownBy(() -> auth0CommandService.registerInAuth0(createUserDto))
                 .isInstanceOf(Auth0UserAlreadyExistsException.class)
-                .hasMessageContaining("john.doe@example.com")
-                .hasMessageContaining("already exists")
+                .hasMessage(Auth0ErrorCode.USER_ALREADY_EXISTS.formatMessage("john.doe@example.com"))
                 .hasCauseInstanceOf(HttpClientErrorException.class);
     }
 
@@ -259,7 +256,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Password too weak"));
@@ -267,7 +264,7 @@ class Auth0CommandServiceTest {
         // When & Then
         assertThatThrownBy(() -> auth0CommandService.registerInAuth0(createUserDto))
                 .isInstanceOf(Auth0ValidationException.class)
-                .hasMessageContaining("Invalid data or password requirements not met")
+                .hasMessage(Auth0ErrorCode.VALIDATION_ERROR.getMessage())
                 .hasCauseInstanceOf(HttpClientErrorException.class);
     }
 
@@ -280,7 +277,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "Invalid token"));
@@ -288,8 +285,7 @@ class Auth0CommandServiceTest {
         // When & Then
         assertThatThrownBy(() -> auth0CommandService.registerInAuth0(createUserDto))
                 .isInstanceOf(Auth0PermissionException.class)
-                .hasMessageContaining("Insufficient permissions")
-                .hasMessageContaining("M2M token scopes")
+                .hasMessage(Auth0ErrorCode.PERMISSION_DENIED.getMessage())
                 .hasCauseInstanceOf(HttpClientErrorException.class);
     }
 
@@ -302,7 +298,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new HttpClientErrorException(HttpStatus.FORBIDDEN, "Access denied"));
@@ -310,7 +306,7 @@ class Auth0CommandServiceTest {
         // When & Then
         assertThatThrownBy(() -> auth0CommandService.registerInAuth0(createUserDto))
                 .isInstanceOf(Auth0PermissionException.class)
-                .hasMessageContaining("Insufficient permissions")
+                .hasMessage(Auth0ErrorCode.PERMISSION_DENIED.getMessage())
                 .hasCauseInstanceOf(HttpClientErrorException.class);
     }
 
@@ -323,7 +319,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error"));
@@ -331,7 +327,7 @@ class Auth0CommandServiceTest {
         // When & Then
         assertThatThrownBy(() -> auth0CommandService.registerInAuth0(createUserDto))
                 .isInstanceOf(Auth0ConnectionException.class)
-                .hasMessageContaining("temporarily unavailable")
+                .hasMessage(Auth0ErrorCode.SERVICE_UNAVAILABLE.getMessage())
                 .hasCauseInstanceOf(HttpServerErrorException.class);
     }
 
@@ -344,7 +340,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new ResourceAccessException("Connection timeout"));
@@ -352,8 +348,7 @@ class Auth0CommandServiceTest {
         // When & Then
         assertThatThrownBy(() -> auth0CommandService.registerInAuth0(createUserDto))
                 .isInstanceOf(Auth0ConnectionException.class)
-                .hasMessageContaining("Cannot reach Auth0 service")
-                .hasMessageContaining("network connectivity")
+                .hasMessage(Auth0ErrorCode.NETWORK_ERROR.getMessage())
                 .hasCauseInstanceOf(ResourceAccessException.class);
     }
 
@@ -366,7 +361,7 @@ class Auth0CommandServiceTest {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class))
                 .thenThrow(new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "Rate limit exceeded"));
@@ -374,13 +369,12 @@ class Auth0CommandServiceTest {
         // When & Then
         assertThatThrownBy(() -> auth0CommandService.registerInAuth0(createUserDto))
                 .isInstanceOf(Auth0ServiceException.class)
-                .hasMessageContaining("Unexpected error")
+                .hasMessageContaining("Unexpected error while creating Auth0 user")
                 .hasCauseInstanceOf(HttpClientErrorException.class);
     }
 
     @Test
     @DisplayName("Should handle email without @ symbol defensively")
-    @SuppressWarnings("unchecked")
     void testRegisterInAuth0_EmailWithoutAtSymbol() {
         // Given - malformed email (shouldn't happen with @Email validation, but defensive)
         CreateUserDto malformedDto = new CreateUserDto(
@@ -398,11 +392,12 @@ class Auth0CommandServiceTest {
 
         when(auth0ManagementTokenService.getAccessToken()).thenReturn(MANAGEMENT_TOKEN);
 
-        ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Auth0UserCreationRequest> requestCaptor =
+                ArgumentCaptor.forClass(Auth0UserCreationRequest.class);
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(payloadCaptor.capture())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(requestCaptor.capture())).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Auth0RegistrationDto.class)).thenReturn(auth0Response);
 
@@ -410,8 +405,8 @@ class Auth0CommandServiceTest {
         auth0CommandService.registerInAuth0(malformedDto);
 
         // Then - should use full email as username instead of crashing
-        Map<String, Object> payload = payloadCaptor.getValue();
-        assertThat(payload.get("username")).isEqualTo("invalid-email");
+        Auth0UserCreationRequest request = requestCaptor.getValue();
+        assertThat(request.username()).isEqualTo("invalid-email");
     }
 
     /**
@@ -424,18 +419,18 @@ class Auth0CommandServiceTest {
     /**
      * Helper method to setup RestClient mock chain with optional ArgumentCaptor for body.
      *
-     * @param payloadCaptor Optional captor for the request body. If null, uses any() matcher.
+     * @param requestCaptor Optional captor for the request body. If null, uses any() matcher.
+     * @param <T> Type of the request body being captured
      */
-    @SuppressWarnings("unchecked")
-    private void setupRestClientMocksWithCaptor(ArgumentCaptor<Map<String, Object>> payloadCaptor) {
+    private <T> void setupRestClientMocksWithCaptor(ArgumentCaptor<T> requestCaptor) {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
 
-        if (payloadCaptor != null) {
-            when(requestBodySpec.body(payloadCaptor.capture())).thenReturn(requestBodySpec);
+        if (requestCaptor != null) {
+            when(requestBodySpec.body(requestCaptor.capture())).thenReturn(requestBodySpec);
         } else {
-            when(requestBodySpec.body(any())).thenReturn(requestBodySpec);
+            when(requestBodySpec.body(any(Auth0UserCreationRequest.class))).thenReturn(requestBodySpec);
         }
 
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);

@@ -98,7 +98,6 @@ US-B01 (feat): implement Auth0 exception handling and error mapping
 **Format**: `<USER_STORY_ID> (<type>): <concise description>`
 
 **Types**:
-
 - `feat` - New feature or enhancement
 - `fix` - Bug fix
 - `refactor` - Code restructuring without behavior change
@@ -107,14 +106,12 @@ US-B01 (feat): implement Auth0 exception handling and error mapping
 - `chore` - Build, dependencies, or tooling changes
 
 **Guidelines**:
-
 - Use imperative mood ("implement" not "implemented")
 - Keep description under 72 characters
 - No period at the end
 - Be specific but concise
 
 **Examples**:
-
 - `US-B01 (feat): add JWT token validation with Auth0`
 - `US-B02 (fix): resolve employee registration rollback issue`
 - `US-B03 (refactor): align bean configuration with module pattern`

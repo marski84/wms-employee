@@ -7,7 +7,7 @@ package auth.exceptions;
  * - Invalid email format
  * - Missing required fields
  * - Invalid user metadata structure
- * <p>
+ *
  * Typically corresponds to HTTP 400 Bad Request response from Auth0 Management API.
  */
 public class Auth0ValidationException extends Auth0ServiceException {
