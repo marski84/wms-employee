@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @Slf4j
 @Import({
-        org.localhost.wmsemployee.config.HttpClientConfig.class,
+        WmsAppConfig.class,
         employee.EmployeeConfig.class,
         auth.AuthConfig.class
 })

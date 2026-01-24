@@ -5,7 +5,6 @@ import employee.dto.CreateUserDto;
 import employee.dto.UserDto;
 import employee.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
  * 3. Link Auth0 identity with local user
  * 4. Rollback Auth0 if local creation fails
  */
-@Service
 @Slf4j
 public class EmployeeCommandService {
 
