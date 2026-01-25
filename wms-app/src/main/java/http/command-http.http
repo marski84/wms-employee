@@ -99,8 +99,8 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "{{randName}}666",
-  "surname": "{{randSurname}}666",
+  "name": "{{randName}}111",
+  "surname": "{{randSurname}}111",
   "email": "{{randEmail}}",
   "phoneNumber": "{{randPhone}}",
   "password": "Password@123",

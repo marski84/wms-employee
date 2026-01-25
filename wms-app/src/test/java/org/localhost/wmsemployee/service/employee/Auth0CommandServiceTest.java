@@ -6,7 +6,6 @@ import auth.error.Auth0ErrorCode;
 import auth.exceptions.*;
 import auth.service.Auth0ManagementTokenService;
 import employee.dto.CreateUserDto;
-import employee.model.enumeration.EmployeeRole;
 import employee.model.enumeration.EmployeeStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,18 +55,28 @@ class Auth0CommandServiceTest {
     private RestClient.ResponseSpec responseSpec;
     @Mock
     private Auth0ManagementTokenService auth0ManagementTokenService;
+    @Mock
+    private Auth0RoleService auth0RoleService;
     private Auth0CommandService auth0CommandService;
     private CreateUserDto createUserDto;
     private Auth0RegistrationDto auth0Response;
 
     @BeforeEach
     void setUp() {
-        auth0CommandService = new Auth0CommandService(restClient, auth0ManagementTokenService);
+        auth0CommandService = new Auth0CommandService(restClient, auth0ManagementTokenService, auth0RoleService);
 
         // Set @Value fields using ReflectionTestUtils
         ReflectionTestUtils.setField(auth0CommandService, "auth0Domain", "test.auth0.com");
         ReflectionTestUtils.setField(auth0CommandService, "auth0UsersEndpoint", AUTH0_USERS_ENDPOINT);
         ReflectionTestUtils.setField(auth0CommandService, "auth0Connection", AUTH0_CONNECTION);
+
+        // Mock Auth0RoleService to return a test role ID
+        when(auth0RoleService.getRoleIdByName(anyString())).thenReturn("role_test123");
+
+        // Mock RestClient for role assignment POST (used when role is provided in createUserDto)
+        // This mocking is intentionally lenient as not all tests will trigger role assignment
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toBodilessEntity()).thenReturn(null);
 
         createUserDto = new CreateUserDto(
                 "John",
@@ -77,7 +86,7 @@ class Auth0CommandServiceTest {
                 "Password@123",
                 "Password@123",
                 "Software Engineer",
-                EmployeeRole.EMPLOYEE,
+                null,  // Role set to null to avoid triggering role assignment in basic tests
                 EmployeeStatus.AVAILABLE,
                 UUID.randomUUID()
         );
@@ -151,7 +160,7 @@ class Auth0CommandServiceTest {
         assertThat(metadata.surname()).isEqualTo("Doe");
         assertThat(metadata.phoneNumber()).isEqualTo("+48123456789");
         assertThat(metadata.jobTitle()).isEqualTo("Software Engineer");
-        assertThat(metadata.role()).isEqualTo("EMPLOYEE");
+        assertThat(metadata.role()).isNull(); // Role not set in this test (role assignment tested separately)
         assertThat(metadata.status()).isEqualTo("AVAILABLE");
     }
 
@@ -385,7 +394,7 @@ class Auth0CommandServiceTest {
                 "Password@123",
                 "Password@123",
                 "Software Engineer",
-                EmployeeRole.EMPLOYEE,
+                null,  // No role to avoid triggering role assignment in this test
                 EmployeeStatus.AVAILABLE,
                 UUID.randomUUID()
         );

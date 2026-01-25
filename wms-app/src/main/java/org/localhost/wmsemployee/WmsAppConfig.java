@@ -3,6 +3,7 @@ package org.localhost.wmsemployee;
 import auth.service.Auth0ManagementTokenService;
 import employee.service.UserService;
 import org.localhost.wmsemployee.service.employee.Auth0CommandService;
+import org.localhost.wmsemployee.service.employee.Auth0RoleService;
 import org.localhost.wmsemployee.service.employee.EmployeeCommandService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -20,10 +21,18 @@ import org.springframework.web.client.RestClient;
 public class WmsAppConfig {
 
     @Bean
-    public Auth0CommandService auth0CommandService(
+    public Auth0RoleService auth0RoleService(
             RestClient restClient,
             Auth0ManagementTokenService auth0ManagementTokenService) {
-        return new Auth0CommandService(restClient, auth0ManagementTokenService);
+        return new Auth0RoleService(restClient, auth0ManagementTokenService);
+    }
+
+    @Bean
+    public Auth0CommandService auth0CommandService(
+            RestClient restClient,
+            Auth0ManagementTokenService auth0ManagementTokenService,
+            Auth0RoleService auth0RoleService) {
+        return new Auth0CommandService(restClient, auth0ManagementTokenService, auth0RoleService);
     }
 
     @Bean
