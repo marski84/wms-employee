@@ -188,6 +188,28 @@ public class UserService {
     }
 
     /**
+     * Updates the Auth0 user ID for a user.
+     * Called after successful Auth0 registration to link Auth0 identity with local user.
+     *
+     * @param userId     Local user ID
+     * @param auth0UserId Auth0 user identifier (e.g., "auth0|abc123")
+     * @return Updated user DTO
+     * @throws UserNotFoundException if user not found
+     */
+    @Transactional
+    public UserDto setAuth0UserId(UUID userId, String auth0UserId) {
+        log.info("Setting Auth0 user ID for user: {}", userId);
+
+        User user = dataAccess.getUserOrThrow(userId);
+        user.setAuthUserID(auth0UserId);
+
+        User updatedUser = dataAccess.saveUser(user);
+        log.info("Auth0 user ID set successfully for user: {}", userId);
+
+        return mapToDto(updatedUser);
+    }
+
+    /**
      * Maps User entity to UserDto.
      * Excludes password hash for security.
      */

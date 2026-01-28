@@ -257,4 +257,40 @@ class UserServiceTest {
 
         verify(dataAccess, never()).deleteUser(any());
     }
+
+    @Test
+    @DisplayName("Should set Auth0 user ID successfully")
+    void testSetAuth0UserId_Success() {
+        // Given
+        String auth0UserId = "auth0|abc123def456";
+        when(dataAccess.getUserOrThrow(userId)).thenReturn(testUser);
+        when(dataAccess.saveUser(any(User.class))).thenReturn(testUser);
+
+        // When
+        UserDto result = userService.setAuth0UserId(userId, auth0UserId);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(dataAccess, times(1)).getUserOrThrow(userId);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(dataAccess, times(1)).saveUser(userCaptor.capture());
+        User savedUser = userCaptor.getValue();
+        assertThat(savedUser.getAuthUserID()).isEqualTo(auth0UserId);
+    }
+
+    @Test
+    @DisplayName("Should throw UserNotFoundException when setting Auth0 ID for non-existent user")
+    void testSetAuth0UserId_UserNotFound() {
+        // Given
+        String auth0UserId = "auth0|abc123def456";
+        when(dataAccess.getUserOrThrow(userId)).thenThrow(new UserNotFoundException(userId));
+
+        // When & Then
+        assertThatThrownBy(() -> userService.setAuth0UserId(userId, auth0UserId))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining(userId.toString());
+
+        verify(dataAccess, never()).saveUser(any());
+    }
 }

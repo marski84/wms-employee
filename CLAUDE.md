@@ -87,6 +87,36 @@ database/
 **Key Principle**: Each module owns its database tables, but all migrations are centralized in `/database` for
 consistent deployment and versioning across the modular monolith.
 
+### Git Commit Messages
+
+Follow this **concise commit message format** for consistency:
+
+```
+US-B01 (feat): implement Auth0 exception handling and error mapping
+```
+
+**Format**: `<USER_STORY_ID> (<type>): <concise description>`
+
+**Types**:
+- `feat` - New feature or enhancement
+- `fix` - Bug fix
+- `refactor` - Code restructuring without behavior change
+- `test` - Adding or updating tests
+- `docs` - Documentation updates
+- `chore` - Build, dependencies, or tooling changes
+
+**Guidelines**:
+- Use imperative mood ("implement" not "implemented")
+- Keep description under 72 characters
+- No period at the end
+- Be specific but concise
+
+**Examples**:
+- `US-B01 (feat): add JWT token validation with Auth0`
+- `US-B02 (fix): resolve employee registration rollback issue`
+- `US-B03 (refactor): align bean configuration with module pattern`
+- `US-B04 (test): add unit tests for Auth0 exception handling`
+
 ## Architecture
 
 ### Authentication Flow
