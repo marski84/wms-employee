@@ -149,11 +149,21 @@ public class UserService {
 
         // Update role if provided
         if (dto.role() != null) {
+            // Log role change for audit trail
+            if (user.getRole() != dto.role()) {
+                log.info("Role change detected for user {}: {} -> {}",
+                        userId, user.getRole(), dto.role());
+            }
             user.setRole(dto.role());
         }
 
         // Update status if provided
         if (dto.status() != null) {
+            // Log status change for audit trail
+            if (user.getStatus() != dto.status()) {
+                log.info("Status change detected for user {}: {} -> {}",
+                        userId, user.getStatus(), dto.status());
+            }
             user.setStatus(dto.status());
         }
 
@@ -207,6 +217,29 @@ public class UserService {
         log.info("Auth0 user ID set successfully for user: {}", userId);
 
         return mapToDto(updatedUser);
+    }
+
+    /**
+     * Retrieves the Auth0 user ID for a given user.
+     * Used when coordinating Auth0 operations (e.g., role updates).
+     *
+     * @param userId Local user ID
+     * @return Auth0 user ID (e.g., "auth0|abc123")
+     * @throws UserNotFoundException if user not found
+     * @throws IllegalStateException if user doesn't have an Auth0 ID linked
+     */
+    @Transactional(readOnly = true)
+    public String getAuth0UserId(UUID userId) {
+        log.debug("Fetching Auth0 user ID for user: {}", userId);
+        User user = dataAccess.getUserOrThrow(userId);
+
+        if (user.getAuthUserID() == null || user.getAuthUserID().isBlank()) {
+            throw new IllegalStateException(
+                    String.format("User %s does not have an Auth0 user ID linked", userId)
+            );
+        }
+
+        return user.getAuthUserID();
     }
 
     /**
